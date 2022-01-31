@@ -30,15 +30,11 @@ total_records = len(gold_standard)
 for v in MU_variables:
     print(v)  
 
-    # Create a column that stores whether or not there is exact agreement for that pair
-    # pes_var = v + '_pes'
-    # cen_var = v + '_cen'
-       
+    # Create a column that stores whether or not there is exact agreement for that pair      
     gold_standard[v + "_exact"] = np.where(gold_standard[v + '_pes'] == gold_standard[v + '_cen'], 1, 0)
 
     # Use the sum_col function to create a total number of pairs with exact agreement
     exact = gold_standard[v + "_exact"].sum()
-    print(exact)
     
     # Divide the total number of exact matches by the total number of records
     value = exact / total_records
@@ -67,24 +63,22 @@ u_values = pd.DataFrame([])
 
 # For name variables:
 for v in MU_variables:
-    print(v)
-    # Remove missing CCS rows
+
+    # Remove missing rows
     sample.dropna(subset=[v + '_cen'], inplace=True)
     sample.dropna(subset=[v + '_pes'], inplace=True)
 
     # Count
     total = len(sample)
-    print("total: " + str(total))
+
     # Agreement count
     sample[v + "_exact"] = np.where(sample[v + '_pes'] == sample[v + '_cen'], 1, 0)
 
     # Create a total number of pairs with exact agreement
     exact = sample[v + "_exact"].sum()
-    print("exact: " + str(exact))
 
     # Proportion
     value = exact / total
-    print("value: " + str(value))
 
     # Append to DataFrame
     u_values = u_values.append(pd.DataFrame({'variable': v, 'u_value': value}, index=[1]), ignore_index=True)
