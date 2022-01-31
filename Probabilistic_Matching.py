@@ -15,27 +15,23 @@ PES = pd.read_csv('Mock_Rwanda_Data_Pes.csv')
 # --------- BLOCKING ---------- #
 # ----------------------------- #
 
-# Block on geographic variables
-BP1 = 'village'
-BP2 = 'cellule'
-BP3 = 'sector'
-BP4 = 'district'
-BP5 = 'province'
+# Block on province geographic variable
+BP1 = 'province'
 
 # Combine
-for i, BP in enumerate([BP1,BP2,BP3,BP4,BP5], 1):
+for i, BP in enumerate([BP1], 1):
   
-  if i == 1:
-    combined_blocks = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
-    print(combined_blocks.count())
-    
-  if i > 1:
-    combined_blocks_2 = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
-    print(combined_blocks_2.count())
-    combined_blocks = pd.concat([combined_blocks, combined_blocks_2]).drop_duplicates(['id_indi_cen', 'id_indi_pes'])
+    if i == 1:
+        combined_blocks = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
+        print(combined_blocks.count())
+
+    if i > 1:
+        combined_blocks_2 = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
+        print(combined_blocks_2.count())
+        combined_blocks = pd.concat([combined_blocks, combined_blocks_2]).drop_duplicates(['id_indi_cen', 'id_indi_pes'])
 
 # Count
-len(combined_blocks) # 44968
+len(combined_blocks) # 50042
 
 # -------------------------------------------------- #
 # --------------- AGREEMENT VECTORS ---------------- #
@@ -47,22 +43,21 @@ len(combined_blocks) # 44968
 # Select agreement variables
 v1 = 'firstnm'
 v2 = 'lastnm'
-v3 = 'sex'
+v3 = 'month'
+v4 = 'year'
+v5 = 'sex'
 
 # All agreement variables used to calculate match weights & probabilities
-all_variables = [v1, v2, v3]
+all_variables = [v1, v2, v3, v4, v5]
 
 # Variables using partial agreement (string similarity)
 edit_distance_variables = [v1, v2]
-
-remaining_variables = [v3]
+dob_variables = [v3, v4]
+remaining_variables = [v5]
 
 # Cut off values for edit distance variables
 cutoff_values = [0.45, 0.45]
 dob_cutoff_values = [0.50]
-
-# Remaining Variables - Only zero or full agreement for these
-# remaining_variables = [v4]
 
 # Replace NaN with blank spaces to assure the right data types for string similarity metrics
 for variable in edit_distance_variables:
@@ -72,7 +67,8 @@ for variable in edit_distance_variables:
     combined_blocks[pes_var] = combined_blocks[pes_var].fillna("")
 
 def SLD(s,t):
-    # Using the rapidfuzz string matching library for it's fast string comparisons
+    # Computing the standardised levenshtein edit distance between two strings 
+    # using the rapidfuzz string matching library for it's fast string comparisons
     # Dividing result by 100 to return a score between 0 and 1
     standardised = (rapidfuzz.string_metric.normalized_levenshtein(s, t)/100)
     return standardised;
@@ -93,21 +89,29 @@ u_values = pd.read_csv('u_values.csv')
 FN_M =  m_values[m_values.variable == 'firstnm'].iloc[0][1]
 SN_M =  m_values[m_values.variable == 'lastnm'].iloc[0][1]
 SEX_M = m_values[m_values.variable == 'sex'].iloc[0][1]
+MONTH_M = m_values[m_values.variable == 'month'].iloc[0][1]
+YEAR_M = m_values[m_values.variable == 'year'].iloc[0][1]
 
 # Save individual U values
 FN_U =  u_values[u_values.variable == 'firstnm'].iloc[0][1]
 SN_U =  u_values[u_values.variable == 'lastnm'].iloc[0][1]
 SEX_U = u_values[u_values.variable == 'sex'].iloc[0][1]
+MONTH_U = u_values[u_values.variable == 'month'].iloc[0][1]
+YEAR_U = u_values[u_values.variable == 'year'].iloc[0][1]
 
 # Add M values back into file
 combined_blocks['firstnm_m'] = FN_M
 combined_blocks['lastnm_m'] = SN_M
 combined_blocks['sex_m'] = SEX_M
+combined_blocks['month_m'] = MONTH_M
+combined_blocks['year_m'] = YEAR_M
 
 # Add U values back into file
 combined_blocks['firstnm_u'] = FN_U
 combined_blocks['lastnm_u'] = SN_U
 combined_blocks['sex_u'] = SEX_U
+combined_blocks['month_u'] = MONTH_U
+combined_blocks['year_u'] = YEAR_U
 
 # Add Agreement / Disagreement Weights
 for var in all_variables:
@@ -127,14 +131,26 @@ for var in all_variables:
 # --------------------------------------- #  
 
 # Partial scores
-# combined_blocks['day_score'] = ,   when(combined_blocks.day_ccs  == combined_blocks.day_cen,  1/3).otherwise(0))
-# combined_blocks['day_score'] = combined_blocks.withColumn('month_score', when(combined_blocks.mon_ccs  == combined_blocks.mon_cen,  1/3).otherwise(0))
-# combined_blocks['day_score'] = combined_blocks.withColumn('year_score',  when(combined_blocks.year_ccs == combined_blocks.year_cen, 1/3).otherwise(0))
+combined_blocks['month_score'] = np.where(combined_blocks['month_pes']  == combined_blocks['month_cen'],  0.5, 0)
+combined_blocks['year_score'] = np.where(combined_blocks['year_pes']  == combined_blocks['year_cen'],  0.5, 0)
 
-# # Final Score
-# combined_blocks = combined_blocks.withColumn('DOB_agreement', F.expr("day_score + month_score + year_score")).drop('day_score', 'month_score', 'year_score')
+# Compute final Score and drop extra score columns
+dob_score_columns = ['month_score', 'year_score']
+combined_blocks['DOB_agreement'] = combined_blocks[dob_score_columns].sum(axis=1)
+combined_blocks = combined_blocks.drop(dob_score_columns, axis = 1)
 
 # # DOB Agreement Adjustment for strong candidates with missing DOB and AGE within 3
+combined_blocks['DOB_agreement'] = np.where((combined_blocks['age_cen'] - combined_blocks['age_pes'] < 4)
+                                            &
+                                            (combined_blocks['firstnm_agreement'] > 0.65) & (combined_blocks['lastnm_agreement'] > 0.65) 
+                                            &
+                                            (combined_blocks['sex_cen'] == combined_blocks['sex_pes']) 
+                                            &
+                                            ((combined_blocks.loc[(combined_blocks['month_cen'].isnull() & combined_blocks['year_cen'].isnull())]) 
+                                             | 
+                                            (combined_blocks.loc[combined_blocks['month_pes'].isnull() & combined_blocks['year_pes'].isnull()])),
+                                            0.55, combined_blocks['DOB_agreement'])
+                                            
 # combined_blocks = combined_blocks.withColumn('DOB_agreement', 
 #                                              when(((abs_(combined_blocks.age_ccs - combined_blocks.age_cen) < 4) & 
 #                                                    (combined_blocks.fn1_agreement > 0.65) & (combined_blocks.sn1_agreement > 0.65) &
