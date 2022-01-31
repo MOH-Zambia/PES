@@ -11,6 +11,10 @@ import numpy as np
 CEN = pd.read_csv('Mock_Rwanda_Data_Census.csv')
 PES = pd.read_csv('Mock_Rwanda_Data_Pes.csv')
 
+# select needed columns
+CEN = CEN[['id_indi_cen', 'firstnm_cen', 'lastnm_cen', 'age_cen', 'month_cen', 'year_cen', 'sex_cen', 'province_cen']]
+PES = PES[['id_indi_pes', 'firstnm_pes', 'lastnm_pes', 'age_pes', 'month_pes', 'year_pes', 'sex_pes', 'province_pes']]
+    
 # ----------------------------- #
 # --------- BLOCKING ---------- #
 # ----------------------------- #
@@ -22,13 +26,8 @@ BP1 = 'province'
 for i, BP in enumerate([BP1], 1):
   
     if i == 1:
-        combined_blocks = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
-        print(combined_blocks.count())
-
-    if i > 1:
-        combined_blocks_2 = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner')
-        print(combined_blocks_2.count())
-        combined_blocks = pd.concat([combined_blocks, combined_blocks_2]).drop_duplicates(['id_indi_cen', 'id_indi_pes'])
+        combined_blocks = PES.merge(CEN, left_on = BP + '_pes', right_on = BP + '_cen', how = 'inner').drop_duplicates(['id_indi_cen', 'id_indi_pes'])
+        print("1" + str(combined_blocks.count()))
 
 # Count
 len(combined_blocks) # 50042
@@ -115,7 +114,6 @@ combined_blocks['year_u'] = YEAR_U
 
 # Add Agreement / Disagreement Weights
 for var in all_variables:
-    print(var)
     combined_blocks[var + "_agreement_weight"] = combined_blocks.apply(lambda x: (math.log2(x[var + "_m"] / x[var + "_u"])), axis = 1)
     combined_blocks[var + "_disagreement_weight"] = combined_blocks.apply(lambda x: (math.log2((1 - x[var + "_m"]) / (1 - x[var + "_u"]))), axis = 1)
                              
@@ -131,38 +129,13 @@ for var in all_variables:
 # --------------------------------------- #  
 
 # Partial scores
-combined_blocks['month_score'] = np.where(combined_blocks['month_pes']  == combined_blocks['month_cen'],  0.5, 0)
-combined_blocks['year_score'] = np.where(combined_blocks['year_pes']  == combined_blocks['year_cen'],  0.5, 0)
+combined_blocks['month_agreement'] = np.where(combined_blocks['month_pes']  == combined_blocks['month_cen'],  1/3, 0)
+combined_blocks['year_agreement'] = np.where(combined_blocks['year_pes']  == combined_blocks['year_cen'],  1/2, 0)
 
 # Compute final Score and drop extra score columns
-dob_score_columns = ['month_score', 'year_score']
+dob_score_columns = ['month_agreement', 'year_agreement']
 combined_blocks['DOB_agreement'] = combined_blocks[dob_score_columns].sum(axis=1)
-combined_blocks = combined_blocks.drop(dob_score_columns, axis = 1)
-
-# # DOB Agreement Adjustment for strong candidates with missing DOB and AGE within 3
-combined_blocks['DOB_agreement'] = np.where((combined_blocks['age_cen'] - combined_blocks['age_pes'] < 4)
-                                            &
-                                            (combined_blocks['firstnm_agreement'] > 0.65) & (combined_blocks['lastnm_agreement'] > 0.65) 
-                                            &
-                                            (combined_blocks['sex_cen'] == combined_blocks['sex_pes']) 
-                                            &
-                                            ((combined_blocks.loc[(combined_blocks['month_cen'].isnull() & combined_blocks['year_cen'].isnull())]) 
-                                             | 
-                                            (combined_blocks.loc[combined_blocks['month_pes'].isnull() & combined_blocks['year_pes'].isnull()])),
-                                            0.55, combined_blocks['DOB_agreement'])
-                                            
-# combined_blocks = combined_blocks.withColumn('DOB_agreement', 
-#                                              when(((abs_(combined_blocks.age_ccs - combined_blocks.age_cen) < 4) & 
-#                                                    (combined_blocks.fn1_agreement > 0.65) & (combined_blocks.sn1_agreement > 0.65) &
-#                                                    (combined_blocks.sex_cen == combined_blocks.sex_ccs) &
-#                                                    (combined_blocks.dob_cen.isNull() | combined_blocks.dob_ccs.isNull())), lit(0.55)).otherwise(col('DOB_agreement')))
-
-# # DOB Agreement Adjustment for strong candidates with missing DOB and AGE within 1
-# combined_blocks = combined_blocks.withColumn('DOB_agreement', 
-#                                              when(((abs_(combined_blocks.age_ccs - combined_blocks.age_cen) < 2) & 
-#                                                    (combined_blocks.fn1_agreement > 0.65) & (combined_blocks.sn1_agreement > 0.65) &
-#                                                    (combined_blocks.sex_cen == combined_blocks.sex_ccs) &
-#                                                    (combined_blocks.dob_cen.isNull() | combined_blocks.dob_ccs.isNull())), lit(0.7)).otherwise(col('DOB_agreement')))
+# combined_blocks = combined_blocks.drop(dob_score_columns, axis = 1)
 
 # ---------------------------------------- #
 # ---------- PARTIAL CUT OFFS ------------ #
@@ -177,8 +150,8 @@ for variable, cutoff in zip(edit_distance_variables, cutoff_values):
 # # DOB
 # for variable, cutoff in zip(dob_variables, dob_cutoff_values):
   
-#   # If agreement below a certain level, set agreement to 0. Else, leave agreeement as it is
-#   combined_blocks = combined_blocks.withColumn(variable + "_agreement", when(col(variable + "_agreement") <= cutoff, 0).otherwise(col(variable + "_agreement")))
+#     # If agreement below a certain level, set agreement to 0. Else, leave agreeement as it is
+#     combined_blocks[variable + "_agreement"] = np.where(combined_blocks[variable + "_agreement"] <= cutoff, 0, combined_blocks[variable + "_agreement"])
 
 # Remaining variables (no partial scores)
 for variable in remaining_variables:
@@ -200,30 +173,32 @@ for variable in all_variables:
 # Update for partial agreement / disagreement (only when agreement < 1)
 for variable in all_variables:
     combined_blocks[variable + "_weight"] = np.where(combined_blocks[variable + "_agreement"] < 1,
-                                                   max((combined_blocks[variable + "_agreement_weight"] - (combined_blocks[variable + "_agreement_weight"] - 
-                                                   combined_blocks[variable + "_disagreement_weight"]) * (1 - combined_blocks[variable + "_agreement_weight"]) * (2)),
-                                                   combined_blocks[variable + "_disagreement_weight"]),
-                                                   combined_blocks[variable + "_weight"])
-
-# Set weights to 0 (instead of disagreement_weight) if there is missingess in CCS or CEN variable (agreement == 0 condition needed for DOB)
+                                                      np.maximum(((combined_blocks[variable + "_agreement_weight"]) - 
+                                                      ((combined_blocks[variable + "_agreement_weight"] - combined_blocks[variable + "_disagreement_weight"]) * 
+                                                      (1 - combined_blocks[variable + "_agreement"]) * (9/2))),
+                                                      combined_blocks[variable + "_disagreement_weight"]),
+                                                      combined_blocks[variable + "_weight"])
+    
+# Set weights to 0 (instead of disagreement_weight) if there is missingess in PES or CEN variable (agreement == 0 condition needed for DOB)
 for variable in all_variables:
-    combined_blocks[variable + "_weight"] = np.where(combined_blocks[variable + '_pes'].isna | combined_blocks[variable + '_cen'].isna &
+    combined_blocks[variable + "_weight"] = np.where(combined_blocks[variable + '_pes'].isnull() | combined_blocks[variable + '_cen'].isnull() &
                                                                                                (combined_blocks[variable + '_agreement'] == 0), 0,
                                                                                                combined_blocks[variable + '_weight'])
     
 # Sum column wise across the above columns - create match score
-combined_blocks["match_score"] = sum(combined_blocks["fn1_weight", "sn1_weight", "dob_weight", "sex_weight"])
+combined_blocks["match_score"] = combined_blocks[['firstnm_weight', 'lastnm_weight', 'month_weight', 'year_weight', 'sex_weight']].sum(axis=1)
 
 # ------------------------------------------------------------------ #
 # -----------------------  ADJUSTMENTS ----------------------------- #
 # ------------------------------------------------------------------ #
 
 # To reduce false matches going to clerical, if ages are dissimilar set score to 0
-combined_blocks = combined_blocks.withColumn("match_score", when(((col('age_ccs').isNotNull()) & 
-                                                                  (col('age_cen').isNotNull()) &
-                                                                  (abs_(combined_blocks.age_ccs - combined_blocks.age_cen) > 5)), lit(0)).otherwise(col('match_score')))
+combined_blocks['match_score'] = np.where((combined_blocks['age_pes'].notnull() == False) & 
+                                          combined_blocks['age_cen'].notnull() &
+                                          (combined_blocks['age_pes'] - combined_blocks['age_cen'] > 5),
+                                          0, combined_blocks['match_score'])
 # -------------------------------------- #
 # --------------  SAVE ----------------- #
 # -------------------------------------- #
 
-combined_blocks.to_csv('Probabilistic_Scores')
+combined_blocks.to_csv('Probabilistic_Scores.csv')
