@@ -1,15 +1,13 @@
 import pandas as pd
 import numpy as np
 
-MU_variables = ['firstnm', 'lastnm', 'sex', 'month', 'year']
-
 # ------------------------------------- #
 # -- Create PES & CEN gold standard --- #
 # ------------------------------------- #
 
 # Read in mock census and PES data
-CEN = pd.read_csv('Mock_Rwanda_Data_Census.csv')
-PES = pd.read_csv('Mock_Rwanda_Data_Pes.csv')
+CEN = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
+PES = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
 
 # join on unique ID
 gold_standard = CEN.merge(PES, left_on = 'id_indi_cen', right_on = 'id_indi_pes', how = 'inner')
@@ -23,6 +21,9 @@ m_values = pd.DataFrame([])
 
 # Store total number of records for use in calculation
 total_records = len(gold_standard)
+
+# Probabilistic linkage variables
+MU_variables = ['firstnm', 'lastnm', 'sex', 'month', 'year']
 
 # --- for loop --- #
 
@@ -94,5 +95,5 @@ print(u_values)
 # ------------------------------------- #
 
 # Spark DataFrame
-m_values.to_csv('m_values.csv', header = True, index = False)
-u_values.to_csv('u_values.csv', header = True, index = False)
+m_values.to_csv('Data/Probabilistic/m_values.csv', header = True, index = False)
+u_values.to_csv('Data/Probabilistic/u_values.csv', header = True, index = False)
