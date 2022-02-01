@@ -56,7 +56,6 @@ remaining_variables = [v5]
 
 # Cut off values for edit distance variables
 cutoff_values = [0.45, 0.45]
-dob_cutoff_values = [0.50]
 
 # Replace NaN with blank spaces to assure the right data types for string similarity metrics
 for variable in edit_distance_variables:
@@ -84,28 +83,28 @@ combined_blocks['lastnm_agreement'] = combined_blocks.apply(lambda x: SLD(x['las
 m_values = pd.read_csv('Data/m_values.csv')
 u_values = pd.read_csv('Data/u_values.csv')
 
-# Save individual M values
+# Save individual M values from file
 FN_M =  m_values[m_values.variable == 'firstnm'].iloc[0][1]
 SN_M =  m_values[m_values.variable == 'lastnm'].iloc[0][1]
 SEX_M = m_values[m_values.variable == 'sex'].iloc[0][1]
 MONTH_M = m_values[m_values.variable == 'month'].iloc[0][1]
 YEAR_M = m_values[m_values.variable == 'year'].iloc[0][1]
 
-# Save individual U values
+# Save individual U values from file
 FN_U =  u_values[u_values.variable == 'firstnm'].iloc[0][1]
 SN_U =  u_values[u_values.variable == 'lastnm'].iloc[0][1]
 SEX_U = u_values[u_values.variable == 'sex'].iloc[0][1]
 MONTH_U = u_values[u_values.variable == 'month'].iloc[0][1]
 YEAR_U = u_values[u_values.variable == 'year'].iloc[0][1]
 
-# Add M values back into file
+# Add M values to unlinked data
 combined_blocks['firstnm_m'] = FN_M
 combined_blocks['lastnm_m'] = SN_M
 combined_blocks['sex_m'] = SEX_M
 combined_blocks['month_m'] = MONTH_M
 combined_blocks['year_m'] = YEAR_M
 
-# Add U values back into file
+# Add U values to unlinked data
 combined_blocks['firstnm_u'] = FN_U
 combined_blocks['lastnm_u'] = SN_U
 combined_blocks['sex_u'] = SEX_U
@@ -114,9 +113,20 @@ combined_blocks['year_u'] = YEAR_U
 
 # Add Agreement / Disagreement Weights
 for var in all_variables:
+    
+    # apply calculations: agreement weight = log base 2 (m/u)
     combined_blocks[var + "_agreement_weight"] = combined_blocks.apply(lambda x: (math.log2(x[var + "_m"] / x[var + "_u"])), axis = 1)
+    
+    # disagreement weight = log base 2 ((1-m)/(1-u))
     combined_blocks[var + "_disagreement_weight"] = combined_blocks.apply(lambda x: (math.log2((1 - x[var + "_m"]) / (1 - x[var + "_u"]))), axis = 1)
-                             
+    
+    # show sample of ag
+    print(combined_blocks[[var + "_agreement_weight", var + "_disagreement_weight"]].head(1))
+    
+'''
+Alter the M and U values above (currently lines 100 - 112) to see the effect on variable agreement/disagreement weights
+'''
+
 # --------------------------------------------------- #
 # ------------------ MATCH SCORES  ------------------ #
 # --------------------------------------------------- #
@@ -147,12 +157,6 @@ for variable, cutoff in zip(edit_distance_variables, cutoff_values):
     # If agreement below a certain level, set agreement to 0. Else, leave agreeement as it is
     combined_blocks[variable + '_agreement'] =  np.where(combined_blocks[variable + "_agreement"] <= cutoff, 0, combined_blocks[variable + "_agreement"])
 
-# # DOB
-# for variable, cutoff in zip(dob_variables, dob_cutoff_values):
-  
-#     # If agreement below a certain level, set agreement to 0. Else, leave agreeement as it is
-#     combined_blocks[variable + "_agreement"] = np.where(combined_blocks[variable + "_agreement"] <= cutoff, 0, combined_blocks[variable + "_agreement"])
-
 # Remaining variables (no partial scores)
 for variable in remaining_variables:
   
@@ -162,15 +166,15 @@ for variable in remaining_variables:
 # -------------------------  WEIGHTS ------------------------------- #
 # ------------------------------------------------------------------ #
 
-# https://www.census.gov/content/dam/Census/library/working-papers/1991/adrm/rr91-9.pdf
-# weight = Agreement_Weight if Agreement = 1, and
-#          MAX{(Agreement_Weight - (Agreement_Weight - Disgreement_Weight)*(1-Agreement)*(9/2)), Disgreement_Weight} if 0 <= Agreement < 1.
-
 # Start by giving all records agreement weights
 for variable in all_variables:
     combined_blocks[variable + "_weight"] =  combined_blocks[variable + "_agreement_weight"]
 
 # Update for partial agreement / disagreement (only when agreement < 1)
+# source: https://www.census.gov/content/dam/Census/library/working-papers/1991/adrm/rr91-9.pdf
+# weight = Agreement_Weight if Agreement = 1, and
+#          MAX{(Agreement_Weight - (Agreement_Weight - Disgreement_Weight)*(1-Agreement)*(9/2)), Disgreement_Weight} if 0 <= Agreement < 1.
+
 for variable in all_variables:
     combined_blocks[variable + "_weight"] = np.where(combined_blocks[variable + "_agreement"] < 1,
                                                       np.maximum(((combined_blocks[variable + "_agreement_weight"]) - 
