@@ -8,8 +8,8 @@ import numpy as np
 # ------------------------- #        
 
 # Read in mock census and PES data
-CEN = pd.read_csv('Mock_Rwanda_Data_Census.csv')
-PES = pd.read_csv('Mock_Rwanda_Data_Pes.csv')
+CEN = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
+PES = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
 
 # select needed columns
 CEN = CEN[['id_indi_cen', 'firstnm_cen', 'lastnm_cen', 'age_cen', 'month_cen', 'year_cen', 'sex_cen', 'province_cen']]
@@ -81,8 +81,8 @@ combined_blocks['lastnm_agreement'] = combined_blocks.apply(lambda x: SLD(x['las
 # --------------------------------------------------------- #
 
 # Read in M and U values
-m_values = pd.read_csv('m_values.csv')
-u_values = pd.read_csv('u_values.csv')
+m_values = pd.read_csv('Data/m_values.csv')
+u_values = pd.read_csv('Data/u_values.csv')
 
 # Save individual M values
 FN_M =  m_values[m_values.variable == 'firstnm'].iloc[0][1]
@@ -201,4 +201,4 @@ combined_blocks['match_score'] = np.where((combined_blocks['age_pes'].notnull() 
 # --------------  SAVE ----------------- #
 # -------------------------------------- #
 
-combined_blocks.to_csv('Probabilistic_Scores.csv')
+combined_blocks.to_csv('Data/Probabilistic_Scores.csv')
