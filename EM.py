@@ -1,78 +1,39 @@
-# Import Pyspark Packages
-import pyspark
-from pyspark.sql import *
-from pyspark.sql.types import *
-import pyspark.sql.functions as f
-from pyspark.sql.functions import col, isnan, when, count, col, countDistinct, least, row_number, datediff, to_date, to_timestamp, lit, asc, desc, collect_set, lag
-from pyspark.sql import Window
+'''
+This script is intended to give a Python demonstration of applying the Expectation-Maximisation algorithm to generate m and u parameters
+used in probabilistic data linkage models.
+'''
 
-# Import Python Packages
 import pandas as pd
 import numpy as np
-
-# Imported from terminal using "pip3 install nltk"
 from nltk.metrics import edit_distance
 
-# Time 
-import time
-start = time.time()
-
-# --------------------------------- #
-# --------- Set up Spark ---------- #
-# --------------------------------- #
-
-
-# Create Spark Session for when we want to use Spark over Python
-sparkSession = SparkSession.builder.\
-enableHiveSupport().\
-appName('visit_history')\
-    .config('spark.executor.memory', '50g')\
-    .config('spark.yarn.executor.memoryOverhead', '10g')\
-    .config('spark.executor.cores', 5)\
-    .config('spark.dynamicAllocation.maxExecutors', 3)\
-    .config('spark.dynamicAllocation.enabled', 'true')\
-    .config('spark.shuffle.service.enabled', 'true')\
-    .enableHiveSupport().getOrCreate()   
+# Mock rows of data
+data = {'ID_1': [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        'Forename_1': ['Charlie','Charlie','Charlie','John','John','Charlie','Charlie','John','Dave','Dave','Dave','Steve','Steve','Charles'],
+        'Surname_1': ['Smith','Smith','Smith','Taylor','Taylor','Bob','James','Taylor','Wright','Wright','Wright','Johnson','Johnson','Johnson'],
+        'value_1': [50,200,125,10,15,15,15,30,100,500,0,20,45,200],
+        'Country_1': ['United Kingdom','United Kingdom','United Kingdom','Germany','Germany','Germany','Germany','Germany','Spain','Spain',
+                      'Spain','Brazil','Brazil','Germany'],
+        'DOB_1': ['02/10/1995','02/10/1995','02/10/1995','15/12/2000','15/12/2000','15/12/2000','15/12/2000','15/12/2000','01/01/1970',
+                  '01/01/1970','01/01/1970','25/08/2002','25/08/2002','25/08/2002']
+       }
+        
+# Create df1 using the above data
+df1 = pd.DataFrame(data)
 
 # Mock rows of data
-values = [(1,    'Charlie', 'Smith',   50,  'United Kingdom', '02/10/1995'),
-          (1,    'Charlie', 'Smith',   200, 'United Kingdom', '02/10/1995'),
-          (1,    'Charlie', 'Smith',   125, 'United Kingdom', '02/10/1995'),
-          (1,    'John',    'Taylor',  10,  'Germany',        '15/12/2000'),
-          (1,    'John',    'Taylor',  15,  'Germany',        '15/12/2000'),
-          (1,    'Charlie', 'Bob',     15,  'Germany',        '15/12/2000'),
-          (1,    'Charlie', 'James',   15,  'Germany',        '15/12/2000'),
-          (1,    'John',    'Taylor',  30,  'Germany',        '15/12/2000'),
-          (1,    'Dave',    'Wright',  100, 'Spain',          '01/01/1970'),
-          (1,    'Dave',    'Wright',  500, 'Spain',          '01/01/1970'),
-          (1,    'Dave',    'Wright',  0,   'Spain',          '01/01/1970'),
-          (1,    'Steve',   'Johnson', 20,  'Brazil',         '25/08/2002'),
-          (1,    'Steve',   'Johnson', 45,  'Brazil',         '25/08/2002'),
-          (1,    'Charles', 'Johnson', 200, 'Germany',        '25/08/2002')]
-
-# Create df1 using the above rows (also specify column headers)
-df1 = sparkSession.createDataFrame(values,['ID_1', 'Forename_1', 'Surname_1', 'value_1', 'Country_1', 'DOB_1'])
-
-# Mock rows of data 2
-values = [(1,    'Charlie', 'Johnson', 50,  'Spain',          '02/10/1995'),
-          (1,    'Charles', 'Smith',   200, 'United Kingdom', '02/10/1995'),
-          (1,    'Charlie', 'Smith',   125, 'United Kingdom', '02/10/1995'),
-          (1,    'John',    'Taylor',  10,  'Germany',        '15/12/2000'),
-          (1,    'Jon',     'Taylor',  15,  'Germany',        '15/12/2000'),
-          (1,    'John',    'Taylor',  30,  'Germany',        '15/12/2000'),
-          (1,    'Dave',    'Wright',  100, 'Spain',          '01/01/1970'),
-          (1,    'David',   'Wright',  500, 'Spain',          '01/01/1970'),
-          (1,    'Dave',    'Wright',  0,   'Spain',          '01/01/1970'),
-          (1,    'Steve',   'Johnson', 20,  'Brazil',         '25/08/2002'),
-          (1,    'Steve',   'Johnson', 45,  'Brazil',         '25/08/2002'),
-          (1,    'Steve',   'Johnson', 200, 'Brazil',         '25/08/2002')]
+data = {'ID_2': [1,1,1,1,1,1,1,1,1,1,1,1],
+        'Forename_2': ['Charlie','Charles','Charlie','John','Jon','John','Dave','David','Dave','Steve','Steve','Steve'],
+        'Surname_2': ['Johnson','Smith','Smith','Taylor','Taylor','Taylor','Wright','Wright','Wright','Johnson','Johnson','Johnson'],
+        'value_2': [50,200,125,10,15,30,100,500,0,20,45,200],
+        'Country_2': ['Spain','United Kingdom','United Kingdom','Germany','Germany','Germany','Spain','Spain','Spain','Brazil',
+                      'Brazil','Brazil'],
+        'DOB_2': ['02/10/1995','02/10/1995','02/10/1995','15/12/2000','15/12/2000','15/12/2000','01/01/1970','01/01/1970','01/01/1970',
+                  '25/08/2002','25/08/2002','25/08/2002']
+       }
 
 # Create df2 using the above rows (also specify column headers)
-df2 = sparkSession.createDataFrame(values,['ID_2', 'Forename_2', 'Surname_2', 'value_2', 'Country_2', 'DOB_2'])
-
-# Convert dfs to Pandas
-df1 = df1.toPandas()
-df2 = df2.toPandas()
+df2 = pd.DataFrame(data)
 
 # ------------------------------------------- #
 # ----------------- Blocking ---------------- #
@@ -86,11 +47,9 @@ combined_blocks = pd.merge(left=df1,
                           right_on=['ID_2']
                           )
 
-
 # ------------------------------------------------------------------- #
 # ----------------- Calculate agreement vector pairs ---------------- #
 # ------------------------------------------------------------------- #
-
 
 '''Agreement vector is created which is then inputted into the EM Algorithm.
 Set v1, v2, v3, v4, v5... as the agreement variables
@@ -126,11 +85,9 @@ agreement_matrix = combined_blocks[[v1 + '_agree',
                                     v2 + '_agree',
                                     v3 + '_agree']]
 
-
 # ------------------------------------------------------------------- #
 # ------------- B Expectation Maximization Algorithm  --------------- #
 # ------------------------------------------------------------------- #
-
 
 '''
 EM - Algorithm Code    
@@ -319,11 +276,9 @@ while (delta_mu > deltamu_convergence) & (iteration_count < max_iteration):
     print(m_1)
     print(u_1)
 
-
 # ------------------------------------------------------------------ #
 # ------------- C Output Information (M & U)------------------------ #
 # ------------------------------------------------------------------ #
-
 
 # Create M and U Dataframes
 m_values = pd.DataFrame([m_1], columns=["{}_m".format(name) for name in all_variables])
@@ -336,7 +291,7 @@ mu_values = pd.concat([m_values, u_values], axis=1)
 # This results in every pair/row having m and u values attached 
 combined_blocks_mu = pd.concat([combined_blocks, mu_values], axis=1, ignore_index=False).ffill()
 
-
+''' This is the end of the m and u parameter estimation. Next, we will apply this to score our candidate records'''
 
 # --------------------------------------------------------------- #
 # ------------------ D Calculate Match Scores  ------------------ #
@@ -370,7 +325,6 @@ E.g. May want to set any partial scores below 0.35 to 0.00 for variable v1
 #    # If agreement below a certain level, set agreement to 0. Else, leave agreeement as it is
 #    combined_blocks_mu[variable + "_agreement"] = np.where(combined_blocks_mu[variable + "_agreement"] <= cutoff, 0., combined_blocks_mu[variable + "_agreement"])
 
-
 # ------------------------------------------------------------------- #
 # ------------- Variables NOT using String Similarity  -------------- #
 # ------------------------------------------------------------------- #
@@ -380,11 +334,9 @@ for variable in remaining_variables:
     # Calculate 1/0 Agreement Score (no partial scoring)
     combined_blocks_mu[variable + "_agreement"] = np.where(combined_blocks_mu[variable + "_1"] == combined_blocks_mu[variable + "_2"], 1., 0.)
 
-
 # ----------------------------------------------------------------------- #
 # ------------------------- FINAL WEIGHTS ------------------------------- #
 # ----------------------------------------------------------------------- #
-
 
 '''
 Calculate weights for all matching variables
@@ -413,11 +365,9 @@ combined_blocks_mu['posterior_odds_ratio'] = combined_blocks_mu["match_score"] *
 # Posterio Probability
 combined_blocks_mu['posterior_probability'] = combined_blocks_mu["posterior_odds_ratio"] / (1 + combined_blocks_mu["posterior_odds_ratio"])
 
-
 # ----------------------------------------------------------------------- #
 # ------------------------  Finalising Output --------------------------- #
 # ----------------------------------------------------------------------- #
-
 
 # Drop individual weight columns  
 for variable in all_variables:  
@@ -434,7 +384,3 @@ combined_blocks_final = combined_blocks_mu[columns]
 
 # Sort
 combined_blocks_final = combined_blocks_final.sort_values(by = 'posterior_probability', ascending = False)
-
-
-end = time.time()
-print(end - start)
