@@ -41,8 +41,8 @@ import jellyfish
 
 # Read in synthetic data
 
-df1 = pd.read_excel(r'\\TS003\collys$\My Documents\Mock_Rwanda_Census.xlsx', sheet_name= 'Census')
-df2 = pd.read_excel(r'\\TS003\collys$\My Documents\Mock_Rwanda_PES.xlsx', sheet_name= 'PES')
+df1 = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
+df2 = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
 
 # Need to add some empty rows to the Census data (df1) to get the matchkeys to run
 df1.loc[df1.shape[0]] = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None] 
