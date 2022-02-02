@@ -3,3 +3,4 @@ rapidfuzz
 numpy
 jellyfish
 fuzzywuzzy
+nltk
