@@ -19,23 +19,31 @@ gold_standard = CEN.merge(PES, left_on = 'id_indi_cen', right_on = 'id_indi_pes'
 # Create empty dataframe to add m values to
 m_values = pd.DataFrame([])
 
-# Store total number of records for use in calculation
-total_records = len(gold_standard)
-
 # Probabilistic linkage variables
 MU_variables = ['firstnm', 'lastnm', 'sex', 'month', 'year']
 
+# Store total number of records for use in calculation
+total_records = len(gold_standard)
+    
 # --- for loop --- #
 
 # For each variable:
 for v in MU_variables:
     print(v)  
 
+    # Remove missing rows
+    gold_standard.dropna(subset=[v + '_cen'], inplace=True)
+    gold_standard.dropna(subset=[v + '_pes'], inplace=True)
+    
     # Create a column that stores whether or not there is exact agreement for that pair      
     gold_standard[v + "_exact"] = np.where(gold_standard[v + '_pes'] == gold_standard[v + '_cen'], 1, 0)
 
     # Use the sum_col function to create a total number of pairs with exact agreement
     exact = gold_standard[v + "_exact"].sum()
+    
+    # Calculate the total number of non-missing values for this variable
+    # taking the minimum of the length of the pes or cen data sets where the variable isn't missing
+    total_records = min(len(gold_standard[v + '_pes'].notnull()), len(gold_standard[v + '_pes'].notnull()))
     
     # Divide the total number of exact matches by the total number of records
     value = exact / total_records
@@ -95,5 +103,5 @@ print(u_values)
 # ------------------------------------- #
 
 # Spark DataFrame
-m_values.to_csv('Data/Probabilistic/m_values.csv', header = True, index = False)
-u_values.to_csv('Data/Probabilistic/u_values.csv', header = True, index = False)
+m_values.to_csv('Data/m_values.csv', header = True, index = False)
+u_values.to_csv('Data/u_values.csv', header = True, index = False)
