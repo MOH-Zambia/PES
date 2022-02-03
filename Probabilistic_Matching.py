@@ -201,6 +201,18 @@ combined_blocks['match_score'] = np.where((combined_blocks['age_pes'].notnull() 
                                           combined_blocks['age_cen'].notnull() &
                                           (combined_blocks['age_pes'] - combined_blocks['age_cen'] > 5),
                                           0, combined_blocks['match_score'])
+
+''' let's view some example clusters produced to check if the scores assigned are sensible'''
+
+# high-scoring candidate record pairs
+cen_vars = [s + '_cen' for s in all_variables]
+pes_vars = [s + '_pes' for s in all_variables]
+
+display(combined_blocks[cen_vars + pes_vars + ['match_score']].sort_values(by=['match_score'], ascending=False).head(50))
+
+# and low-scoring candidate pairs
+display(combined_blocks[cen_vars + pes_vars + ['match_score']].sort_values(by=['match_score']).head(50))
+
 # -------------------------------------- #
 # --------------  SAVE ----------------- #
 # -------------------------------------- #
