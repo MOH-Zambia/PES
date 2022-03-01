@@ -121,7 +121,7 @@ for var in all_variables:
     combined_blocks[var + "_disagreement_weight"] = combined_blocks.apply(lambda x: (math.log2((1 - x[var + "_m"]) / (1 - x[var + "_u"]))), axis = 1)
     
     # show sample of agreement/disagreement weights calculated
-    print(combined_blocks[[var + "_u", var + "_u", var + "_agreement_weight", var + "_disagreement_weight"]].head(1))
+    print(combined_blocks[[var + "_m", var + "_u", var + "_agreement_weight", var + "_disagreement_weight"]].head(1))
     
 '''
 Alter the M and U values above (i.e. FN_M, FN_U etc. currently lines 100 - 112) to see the effect on variable agreement/disagreement weights
