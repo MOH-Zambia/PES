@@ -1,6 +1,6 @@
 # Packages
 import pandas as pd
-import os
+import os 
 
 # Working directory
 os.chdir("C:/Users/Rachel/Documents")
