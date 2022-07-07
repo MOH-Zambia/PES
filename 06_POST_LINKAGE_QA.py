@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import functools
+import re
 
 # Cluster Function
 os.chdir("C:/Users/Rachel/Documents")
@@ -76,7 +77,9 @@ census_household = CEN[CEN.hhid_cen == census_household_ID][cen_variables]
 
 # -------------------------------------------------------------------------- #
 
-"""Other filters that you may want to try - just add them to list above(c1,c2,c3.....cN))"""
+"""
+Other filters that you may want to try - just add them to list above(c1,c2,c3.....cN))
+"""
 
 # N-grams e.g. first 2 letters of first name / last 5 letters of last name
 CEN.first_name_cen.str[0:2] == 'CH'
@@ -87,6 +90,28 @@ CEN.last_name_cen.isnull()
 
 # Filter multiple possible first names
 CEN.first_name_cen.isin(['CHARLIE', 'CHARLES', 'CHAZ'])
+
+# Wildard - Search for a name and allow for one or more characters where the .+ is
+#  e.g. CHARLIE, CHABLIE, CHAPLIE etc.
+def wildcard(string):
+    if re.search('CHA.+LIE',string): return True
+    else: return False
+  
+# Apply wildcard filter
+CEN.first_name_cen.apply(wildcard)
+
+
+
+  
+
+
+
+
+
+
+
+
+
 
 
 
