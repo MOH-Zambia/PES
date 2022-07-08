@@ -4,8 +4,6 @@ import numpy as np
 import os
 import functools
 import re
-
-# Cluster Function
 os.chdir("C:/Users/Rachel/Documents")
 
 # Read in the census data
@@ -44,21 +42,28 @@ cen_variables = [x + '_cen' for x in variables]
 target_record = PES[PES.puid_pes == '999999999999999'][pes_variables]
 pd.melt(target_record)
 
+"""
+5) View all other records from the PES household
+"""
+
 # View all other records from the household (matched or unmatched)
 target_household_ID = target_record['hhid_pes'][0]
 target_household = PES[PES.hhid_pes == target_household_ID][pes_variables]
 
 """
-5) Search for a match in the full census dataset using a selection of different filters
+6) Search for a match in the full census dataset using a selection of different filters
    Comment out filters not used and add in any extras if you find they work better at finding matches
-   Potential census matches (census_candidates) and their respective households (census_household) can be viewed in the variable explorer
+   Potential census matches ("census_candidates") can be viewed in the variable explorer
 """
     
 # Function to combine and apply multiple filters to the census dataset
 def conjunction(*conditions):
     return functools.reduce(np.logical_and, conditions)
 
-# Choose filters that you want to combine together into a filter
+# ------------------------------------------------ #
+# ------ ADD LIST OF CENSUS FILTERS BELOW  ------- #
+# ------------------------------------------------ #  
+
 c1 = CEN.first_name_cen == 'CHARLIE'
 c2 = CEN.last_name_cen == 'CHARLIE'
 c3 = CEN.year_birth_cen.between(1990, 1995)
@@ -66,10 +71,15 @@ c4 = CEN.birth_month_cen.between(5, 12)
 c5 = CEN.sex_cen == '1'
 c6 = CEN.EAid_cen == "123"
 
-# Apply chosen filters
+# Apply chosen filters to census dataset
 conditions_list = [c1, c2, c3, c4, c5, c6]
 census_candidates = CEN[conjunction(*conditions_list)]
 print("Search has produced {} potential census match/matches".format(len(census_candidates)))
+
+"""
+7) If you think you may have found a census record that matches to the PES record, you may want to view the other 
+    records in the census household. "census_household" can be viewed in the variable explorer
+"""
 
 # If you want to view the full household for a census puid/record, use this code
 census_household_ID = CEN[CEN.puid_cen == '111']['hhid_cen'][0]
@@ -78,7 +88,7 @@ census_household = CEN[CEN.hhid_cen == census_household_ID][cen_variables]
 # -------------------------------------------------------------------------- #
 
 """
-Other filters that you may want to try - just add them to list above(c1,c2,c3.....cN))
+8) Other filters that you may want to try in step 6 - just add them to "conditions_list" ([c1,c2,c3.....cN])
 """
 
 # N-grams e.g. first 2 letters of first name / last 5 letters of last name
@@ -92,9 +102,9 @@ CEN.last_name_cen.isnull()
 CEN.first_name_cen.isin(['CHARLIE', 'CHARLES', 'CHAZ'])
 
 # Wildard - Search for a name and allow for one or more characters where the .+ is
-#  e.g. CHARLIE, CHABLIE, CHAPLIE etc.
+#  e.g. CHARLIE, CHABLIE, CHARLLE, CHRALIE, CHALRIE, CHAARLIE etc.
 def wildcard(string):
-    if re.search('CHA.+LIE',string): return True
+    if re.search('CH.+IE',string): return True
     else: return False
   
 # Apply wildcard filter
