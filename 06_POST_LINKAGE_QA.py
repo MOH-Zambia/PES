@@ -1,10 +1,8 @@
 # Import any packages required
 import pandas as pd
 import numpy as np
-import os
 import functools
 import re
-os.chdir("C:/Users/Rachel/Documents")
 
 # Read in the census data
 CEN = pd.read_csv('census_cleaned.csv', index_col=False)
@@ -39,7 +37,7 @@ pes_variables = [x + '_pes' for x in variables]
 cen_variables = [x + '_cen' for x in variables]
 
 # View unmatched PES record 
-target_record = PES[PES.puid_pes == '999999999999999'][pes_variables]
+target_record = PES[PES.puid_pes == '111'][pes_variables]
 pd.melt(target_record)
 
 """
@@ -65,7 +63,7 @@ def conjunction(*conditions):
 # ------------------------------------------------ #  
 
 c1 = CEN.first_name_cen == 'CHARLIE'
-c2 = CEN.last_name_cen == 'CHARLIE'
+c2 = CEN.last_name_cen == 'T'
 c3 = CEN.year_birth_cen.between(1990, 1995)
 c4 = CEN.birth_month_cen.between(5, 12)
 c5 = CEN.sex_cen == '1'
@@ -73,7 +71,7 @@ c6 = CEN.EAid_cen == "123"
 
 # Apply chosen filters to census dataset
 conditions_list = [c1, c2, c3, c4, c5, c6]
-census_candidates = CEN[conjunction(*conditions_list)]
+census_candidates = CEN[conjunction(*conditions_list)][cen_variables]
 print("Search has produced {} potential census match/matches".format(len(census_candidates)))
 
 """
@@ -85,7 +83,15 @@ print("Search has produced {} potential census match/matches".format(len(census_
 census_household_ID = CEN[CEN.puid_cen == '111']['hhid_cen'][0]
 census_household = CEN[CEN.hhid_cen == census_household_ID][cen_variables]
 
+
+
+
 # -------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+
+
+
 
 """
 8) Other filters that you may want to try in step 6 - just add them to "conditions_list" ([c1,c2,c3.....cN])
@@ -93,7 +99,7 @@ census_household = CEN[CEN.hhid_cen == census_household_ID][cen_variables]
 
 # N-grams e.g. first 2 letters of first name / last 5 letters of last name
 CEN.first_name_cen.str[0:2] == 'CH'
-CEN.last_name_cen.str[-5:] == 'ARLIE'
+CEN.first_name_cen.str[-5:] == 'ARLIE'
 
 # Missing value filter
 CEN.last_name_cen.isnull()
@@ -110,7 +116,11 @@ def wildcard(string):
 # Apply wildcard filter
 CEN.first_name_cen.apply(wildcard)
 
-
+# Other variables to filter on:
+    # Head of Household
+    # Relationship to Head of Household 
+    # Marital Status
+    # Different levels of geography e.g. HH, EA, District
 
   
 
@@ -124,24 +134,26 @@ CEN.first_name_cen.apply(wildcard)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+PES = pd.DataFrame({'puid_pes': ['111', '222', '333', '444', '555'],
+                    'hhid_pes': ['11', '11', '11', '22', '22'],
+                    'names_pes': ['CHARLIE T ', 'STEVE X', 'JOHN P', 'BOB Y', 'PETE'],
+                    'first_name_pes': ['CHARLIE', 'STEVE', 'JOHN', 'BOB', 'PETE'],
+                    'last_name_pes': ['T', 'X', 'P', 'Y', None],
+                    'year_birth_pes': [1993, 1999, 1992, 2000, 1970],
+                    'birth_month_pes': [7, 8, 1, 12, 6],
+                    'sex_pes': ['1', '2', '2', '2', '1'],
+                    'EAid_pes': ['123', '456', '789', '123', '456'],
+                    'DSid_pes': ['1', '4', '7', '1', '4'],
+                    'relationship_hh_pes': ['1', '2', '2', '1', '3']})
 
 CEN = pd.DataFrame({'puid_cen': ['111', '222', '333', '444', '555'],
                     'hhid_cen': ['11', '11', '11', '22', '22'],
+                    'names_cen': ['CHARLIE T ', 'STEVE X', 'JOHN P', 'BOB Y', 'PETE'],
                     'first_name_cen': ['CHARLIE', 'STEVE', 'JOHN', 'BOB', 'PETE'],
-                    'last_name_cen': ['CHARLIE', 'STEVE', 'JOHN', 'BOB', None],
+                    'last_name_cen': ['T', 'X', 'P', 'Y', None],
                     'year_birth_cen': [1993, 1999, 1992, 2000, 1970],
                     'birth_month_cen': [7, 8, 1, 12, 6],
                     'sex_cen': ['1', '2', '2', '2', '1'],
-                    'EAid_cen': ['123', '456', '789', '123', '456']})
+                    'EAid_cen': ['123', '456', '789', '123', '456'],
+                    'DSid_cen': ['1', '4', '7', '1', '4'],
+                    'relationship_hh_cen': ['1', '2', '2', '1', '3']})
