@@ -166,9 +166,13 @@ CROW_records_final.to_csv('Stage_2_Within_EA_Matchkey_Clerical.csv', header = Tr
 
 # Open clerical results from CROW
 clerical_results = pd.read_csv('Stage_2_Within_EA_Matchkey_Clerical_DONE.csv') 
+clerical_results['clerical_match'] = 1
 
 # Join clerical results onto matches
-df = df.merge(clerical_results[['puid_cen', 'puid_pes']], how="left", on =['puid_cen', 'puid_pes'])
+df = df.merge(clerical_results[['puid_cen', 'puid_pes', 'clerical_match']], how="left", on =['puid_cen', 'puid_pes'])
+
+# Filter to keep auto matches (CLERICAL = 0) + accepted clerical matches (clerical_match = 1)
+df = df[((df['CLERICAL'] == 0) | (df['clerical_match'] == 1))]
 
 # Match Type Indicator
 df['Match_Type'] = "Within_EA_Matchkey"
