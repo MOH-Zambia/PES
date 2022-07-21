@@ -33,15 +33,15 @@ PES = PES.merge(matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator 
 PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect DataFrame of unique PES EAs
-PES_EA = PES[['EAid_pes']].drop_duplicates()
-PES_EA.rename(columns = {'EAid_pes': 'EAid_cen'}, inplace = True)
+PES_EA_list = PES[['EAid_pes']].drop_duplicates()
+PES_EA_list.rename(columns = {'EAid_pes': 'EAid_cen'}, inplace = True)
 
 # Filter Census residuals to keep only records from PES_EA list
 PES_R = PES
-CEN_R = CEN.merge(PES_EA, on = "EAid_cen", how = 'inner')
+CEN_R = CEN.merge(PES_EA_list, on = "EAid_cen", how = 'inner')
 
 # Loop through each EA
-for EA in PES_EA.EAid_cen.values.tolist():
+for EA in PES_EA_list.EAid_cen.values.tolist():
     
     # Filter CEN and PES residuals to keep only residuals from an EA
     CEN_EA = CEN_R[CEN_R.EAid_cen == EA]
@@ -63,7 +63,7 @@ for EA in PES_EA.EAid_cen.values.tolist():
 all_ea_results = pd.DataFrame()
 
 # Loop through EAs and combine all clerical results from EA 'SNAP'
-for EA in PES_EA.EAid_cen.values.tolist():
+for EA in PES_EA_list.EAid_cen.values.tolist():
 
     # Read in results from an EA
     ea_results = pd.read_csv('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
@@ -81,7 +81,7 @@ all_ea_results['Match_Type'] = "Within_EA_Clerical_Search"
 # If other columns are not joined on then the concat below will not work
 
 # Combine above clerical results with all previous matches
-df3 = pd.concat(matches,all_ea_results)
+df3 = pd.concat([matches,all_ea_results])
 
 # Save
 df3.to_csv('Stage_4_All_Clerical_Search_EA_Matches.csv', header = True)

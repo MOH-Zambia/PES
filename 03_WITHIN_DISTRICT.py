@@ -224,7 +224,7 @@ df2.drop(columns=['ID_count_1', 'ID_count_2', 'Min_MK'], inplace = True)
 df2['Match_Type'] = "Within_DS_Associative"
 
 # Combine all matches together
-df3 = pd.concat(df,df2)
+df3 = pd.concat([df,df2])
 
 # Save
 df3.to_csv('Stage_3_All_Within_DS_Matches.csv', header = True)
