@@ -172,11 +172,11 @@ df['Match_Type'] = "Within_HH_Matchkey"
 
 # CEN residuals - only use census records that have not been matched yet
 CEN_R = CEN.merge(df[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
-CEN_R = CEN_R[CEN_R['_merge'] == 'left_only'].drop(columns = ['_merge'])
+CEN_R = CEN_R[CEN_R['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # PES residuals - only use PES records that have not been matched yet
 PES_R = PES.merge(df[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
-PES_R = PES_R[PES_R['_merge'] == 'left_only'].drop(columns = ['_merge'])
+PES_R = PES_R[PES_R['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect HH ID pairs from matches made so far
 HH_pairs = df[['hhid_cen', 'hhid_pes']].drop_duplicates()

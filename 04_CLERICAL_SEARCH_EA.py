@@ -26,21 +26,22 @@ matches = pd.read_csv('Stage_3_All_Within_DS_Matches.csv')
 
 # CEN residuals
 CEN = CEN.merge(matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
-CEN = CEN[CEN['_merge'] == 'left_only'].drop(columns = ['_merge'])
+CEN = CEN[CEN['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # PES residuals
 PES = PES.merge(matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
-PES = PES[PES['_merge'] == 'left_only'].drop(columns = ['_merge'])
+PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect DataFrame of unique PES EAs
 PES_EA = PES[['EAid_pes']].drop_duplicates()
+PES_EA.rename(columns = {'EAid_pes': 'EAid_cen'}, inplace = True)
 
 # Filter Census residuals to keep only records from PES_EA list
 PES_R = PES
-CEN_R = CEN.merge(PES_EA, on = [CEN.EAid_cen == PES_EA.EAid_pes], how = 'inner')
+CEN_R = CEN.merge(PES_EA, on = "EAid_cen", how = 'inner')
 
 # Loop through each EA
-for EA in PES_EA.values.tolist():
+for EA in PES_EA.EAid_cen.values.tolist():
     
     # Filter CEN and PES residuals to keep only residuals from an EA
     CEN_EA = CEN_R[CEN_R.EAid_cen == EA]
@@ -62,8 +63,8 @@ for EA in PES_EA.values.tolist():
 all_ea_results = pd.DataFrame()
 
 # Loop through EAs and combine all clerical results from EA 'SNAP'
-for EA in PES_EA.values.tolist():
-    
+for EA in PES_EA.EAid_cen.values.tolist():
+
     # Read in results from an EA
     ea_results = pd.read_csv('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
 
