@@ -66,10 +66,9 @@ for EA in PES_EA.values.tolist():
     
     # Read in results from an EA
     ea_results = pd.read_csv('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
-    ea_results['clerical_match'] = 1
 
-    # Take matches only
-    ea_results = ea_results[ea_results['clerical_match'] == 1][['puid_cen', 'puid_pes']]
+    # Take columns needed
+    ea_results = ea_results[['puid_cen', 'puid_pes']]
     
     # Combine
     all_ea_results = all_ea_results.append(ea_results)
