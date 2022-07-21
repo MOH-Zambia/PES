@@ -119,6 +119,7 @@ CROW_records_final.to_csv('Stage_3_Within_DS_Matchkey_Clerical.csv', header = Tr
 
 # Open clerical results from CROW
 clerical_results = pd.read_csv('Stage_3_Within_DS_Matchkey_Clerical_DONE.csv') 
+clerical_results['clerical_match'] = 1
 
 # Join clerical results onto matches
 df = df.merge(clerical_results[['puid_cen', 'puid_pes', 'clerical_match']], how="left", on =['puid_cen', 'puid_pes'])
