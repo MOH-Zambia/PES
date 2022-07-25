@@ -157,7 +157,7 @@ CROW_records_1.rename(columns = {'Record_ID' : 'puid'}, inplace = True) # Rename
 CROW_records_2.rename(columns = {'Record_ID' : 'puid'}, inplace = True) # Rename ID column
 CROW_records_1['Source_Dataset'] = 'cen' # Dataset indicator
 CROW_records_2['Source_Dataset'] = 'pes' # Dataset indicator
-CROW_records_final = pd.concat([CROW_records_1, CROW_records_1], axis=0).sort_values(['Cluster_ID']) # Combine two dataets together
+CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(['Cluster_ID']) # Combine two dataets together
 CROW_records_final.to_csv('Stage_2_Within_EA_Matchkey_Clerical.csv', header = True) # Save ready for CROW
 
 
