@@ -22,14 +22,14 @@ print("PES read in")
 # ----------------------------------------------------------------------- #    
 
 # Read in all matches made so far
-matches = pd.read_csv('Stage_2_All_Within_EA_Matches.csv')
+prev_matches = pd.read_csv('Stage_2_All_Within_EA_Matches.csv')
 
 # CEN residuals
-CEN = CEN.merge(matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
+CEN = CEN.merge(prev_matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
 CEN = CEN[CEN['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # PES residuals
-PES = PES.merge(matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
+PES = PES.merge(prev_matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
 PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Matchkey 1: Full Name + Year + Month + District
@@ -94,9 +94,6 @@ df['ID_count_2'] = df.groupby(['puid_pes'])['puid_cen'].transform('count')
 # "If either of the counts are greater than 1, then send records to CROW"
 df['CLERICAL'] = np.where(((df['ID_count_1'] > 1) | (df['ID_count_2'] > 1)), 1,0)
 
-# Drop columns not needed
-df.drop(columns=['ID_count_1', 'ID_count_2', 'Min_MK'], inplace = True)
-
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
 
@@ -129,6 +126,9 @@ df = df[((df['CLERICAL'] == 0) | (df['clerical_match'] == 1))]
 
 # Match Type Indicator
 df['Match_Type'] = "Within_DS_Matchkey"
+
+# Columns to keep
+df = df[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # ----------------------------------------------------------------------- #
 # ----------- STAGE 3: WITHIN DISTRICT ASSOCIATIVE MATCHING ------------- #
@@ -217,14 +217,15 @@ df2['ID_count_2'] = df2.groupby(['puid_pes'])['puid_cen'].transform('count')
 # Keep only unique matches (CROW not used here)
 df2 = df2[((df2['ID_count_1'] == 1) & (df2['ID_count_2'] == 1))]
 
-# Drop columns not needed
-df2.drop(columns=['ID_count_1', 'ID_count_2', 'Min_MK'], inplace = True)
-
-# Match Type Indicator
+# Match Type & Clerical Indicators
 df2['Match_Type'] = "Within_DS_Associative"
+df2['CLERICAL'] = 0
+
+# Columns to keep
+df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # Combine all matches together
-df3 = pd.concat([df,df2])
+df3 = pd.concat([prev_matches,df,df2])
 
 # Save
 df3.to_csv('Stage_3_All_Within_DS_Matches.csv', header = True)

@@ -5,10 +5,6 @@ import networkx as nx
 import jellyfish
 import os
 
-# Cluster Function
-os.chdir("C:/Users/Rachel/Documents")
-from Cluster_Function import cluster_number
-
 # Read in the census data
 CEN = pd.read_csv('census_cleaned.csv', index_col=False)
 print("Census read in") 
@@ -22,14 +18,14 @@ print("PES read in")
 # ---------------------------------------------------------------------- #    
 
 # Read in all matches made so far
-matches = pd.read_csv('Stage_4_All_Clerical_Search_EA_Matches.csv')
+prev_matches = pd.read_csv('Stage_4_All_Clerical_Search_EA_Matches.csv')
 
 # CEN residuals
-CEN = CEN.merge(matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
+CEN = CEN.merge(prev_matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
 CEN = CEN[CEN['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # PES residuals
-PES = PES.merge(matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
+PES = PES.merge(prev_matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
 PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Matchkey 1: Full Name + Year + Month + Sex
@@ -78,11 +74,12 @@ df['ID_count_2'] = df.groupby(['puid_pes'])['puid_cen'].transform('count')
 # Keep only unique matches (CROW not used here)
 df = df[((df['ID_count_1'] == 1) & (df['ID_count_2'] == 1))]
 
-# Drop columns not needed
-df.drop(columns=['ID_count_1', 'ID_count_2', 'Min_MK'], inplace = True)
-
-# Match Type Indicator
+# Match Type & Clerical Indicators
 df['Match_Type'] = "Within_Country_Matchkey"
+df['CLERICAL'] = 0
+
+# Columns to keep
+df = df[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # ---------------------------------------------------------------------- #
 # ----------- STAGE 3: WITHIN COUNTRY ASSOCIATIVE MATCHING ------------- #
@@ -171,14 +168,15 @@ df2['ID_count_2'] = df2.groupby(['puid_pes'])['puid_cen'].transform('count')
 # Keep only unique matches (CROW not used here)
 df2 = df2[((df2['ID_count_1'] == 1) & (df2['ID_count_2'] == 1))]
 
-# Drop columns not needed
-df2.drop(columns=['ID_count_1', 'ID_count_2', 'Min_MK'], inplace = True)
-
-# Match Type Indicator
+# Match Type & Clerical Indicators
 df2['Match_Type'] = "Within_Country_Associative"
+df2['CLERICAL'] = 0
+
+# Columns to keep
+df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # Combine all matches together
-df3 = pd.concat([df,df2])
+df3 = pd.concat([prev_matches,df,df2])
 
 # Save
 df3.to_csv('Stage_5_All_Within_Country_Matches.csv', header = True)

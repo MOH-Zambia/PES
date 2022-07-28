@@ -5,10 +5,6 @@ import networkx as nx
 import jellyfish
 import os
 
-# Cluster Function
-os.chdir("C:/Users/Rachel/Documents")
-from Cluster_Function import cluster_number
-
 # Read in the census data
 CEN = pd.read_csv('census_cleaned.csv', index_col=False)
 print("Census read in") 
@@ -22,14 +18,14 @@ print("PES read in")
 # ------------------------------------------------------------------------ #    
 
 # Read in all matches made so far
-matches = pd.read_csv('Stage_3_All_Within_DS_Matches.csv')
+prev_matches = pd.read_csv('Stage_3_All_Within_DS_Matches.csv')
 
 # CEN residuals
-CEN = CEN.merge(matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
+CEN = CEN.merge(prev_matches[['puid_cen']], on = 'puid_cen', how = 'left', indicator = True)
 CEN = CEN[CEN['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # PES residuals
-PES = PES.merge(matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
+PES = PES.merge(prev_matches[['puid_pes']], on = 'puid_pes', how = 'left', indicator = True)
 PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect DataFrame of unique PES EAs
@@ -74,14 +70,16 @@ for EA in PES_EA_list.EAid_cen.values.tolist():
     # Combine
     all_ea_results = all_ea_results.append(ea_results)
     
-# Match Type Indicator
+# Add Indicators so that previous matches will concat with new matches
 all_ea_results['Match_Type'] = "Within_EA_Clerical_Search"
+all_ea_results['CLERICAL'] = 1
+all_ea_results['MK'] = 0
 
-# Join other columns back onto 'all_ea_results' before combining all matches
-# If other columns are not joined on then the concat below will not work
+# Columns to keep
+all_ea_results = all_ea_results[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # Combine above clerical results with all previous matches
-df3 = pd.concat([matches,all_ea_results])
+df3 = pd.concat([prev_matches,all_ea_results])
 
 # Save
 df3.to_csv('Stage_4_All_Clerical_Search_EA_Matches.csv', header = True)
