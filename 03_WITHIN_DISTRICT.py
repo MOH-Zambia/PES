@@ -5,9 +5,10 @@ import networkx as nx
 import jellyfish
 import os
 
-# Cluster Function
+# Functions
 os.chdir("C:/Users/Rachel/Documents")
 from Cluster_Function import cluster_number
+from Standardised_Lev_Function import std_lev
 
 # Read in the census data
 CEN = pd.read_csv('census_cleaned.csv', index_col=False)
