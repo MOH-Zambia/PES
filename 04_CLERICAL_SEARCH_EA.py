@@ -4,6 +4,7 @@ import numpy as np
 import networkx as nx
 import jellyfish
 import os
+import warnings
 
 # Read in the census data
 CEN = pd.read_csv('census_cleaned.csv', index_col=False)
@@ -43,6 +44,13 @@ for EA in PES_EA_list.EAid_cen.values.tolist():
     CEN_EA = CEN_R[CEN_R.EAid_cen == EA]
     PES_EA = PES_R[PES_R.EAid_pes == EA]
     
+    # Warning if there are no CEN/PES residuals from an EA
+    if len(CEN_EA) == 0:
+        warnings.warn("No census residuals in EA{}".format(str(EA)))
+    
+    if len(PES_EA) == 0:
+        warnings.warn("No PES residuals in EA{}".format(str(EA)))
+
     # Select columns in order you want to save them
     CEN_EA = CEN_EA[['puid_cen', 'names_cen', 'birth_month_cen', 'year_birth_cen', 'sex_cen', 'marital_status_cen']]
     PES_EA = PES_EA[['puid_pes', 'names_pes', 'birth_month_pes', 'year_birth_pes', 'sex_pes', 'marital_status_pes']]
@@ -60,15 +68,20 @@ all_ea_results = pd.DataFrame()
 
 # Loop through EAs and combine all clerical results from EA 'SNAP'
 for EA in PES_EA_list.EAid_cen.values.tolist():
-
-    # Read in results from an EA
-    ea_results = pd.read_csv('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
-
-    # Take columns needed
-    ea_results = ea_results[['puid_cen', 'puid_pes']]
     
-    # Combine
-    all_ea_results = all_ea_results.append(ea_results)
+    # Only loop through EAs where at least one match was made
+    if os.path.exists('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA))):
+
+        # Read in results from an EA
+        ea_results = pd.read_csv('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
+    
+        # Take columns needed
+        ea_results = ea_results[['puid_cen', 'puid_pes']]
+        
+        # Combine
+        all_ea_results = all_ea_results.append(ea_results)
+        
+    else: warnings.warn("No clerical search matches made from EA{}".format(str(EA))) 
     
 # Add Indicators so that previous matches will concat with new matches
 all_ea_results['Match_Type'] = "Within_EA_Clerical_Search"
