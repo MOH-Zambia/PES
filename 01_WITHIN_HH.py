@@ -134,8 +134,14 @@ df['CLERICAL'] = np.where(((df['ID_count_1'] > 1) | (df['ID_count_2'] > 1)), 1,0
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
 
-# Save records for clerical in the correct format for CROW
+# Add cluster number to records
 CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes') # Add cluster ID
+
+# Use this to create a cluster number if the line above is not working. 
+# Note: This will not cluster togther non-unique matches; every pair will be sent separately.
+# CROW_records['Cluster_ID'] = np.arange(len(CROW_records))
+
+# Save records for clerical in the correct format for CROW
 CROW_records_1 = CROW_records[['puid_cen', 'hhid_cen', 'names_cen', 'birth_month_cen', 'year_birth_cen', 'relationship_hh_cen', 'sex_cen', 'marital_status_cen', 'Cluster_ID']].drop_duplicates() # Select columns
 CROW_records_2 = CROW_records[['puid_pes', 'hhid_pes', 'names_pes', 'birth_month_pes', 'year_birth_pes', 'relationship_hh_pes', 'sex_pes', 'marital_status_pes', 'Cluster_ID']].drop_duplicates() # Select columns
 CROW_records_1.columns = CROW_records_1.columns.str.rstrip('_cen')  # Remove suffixes
