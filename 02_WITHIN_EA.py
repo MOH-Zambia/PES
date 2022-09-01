@@ -149,8 +149,8 @@ CROW_records = df[df['CLERICAL'] == 1]
 CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes') # Add cluster ID
 CROW_records_1 = CROW_records[['puid_cen', 'hhid_cen', 'names_cen', 'birth_month_cen', 'year_birth_cen', 'relationship_hh_cen', 'sex_cen', 'marital_status_cen', 'Cluster_ID']].drop_duplicates() # Select columns
 CROW_records_2 = CROW_records[['puid_pes', 'hhid_pes', 'names_pes', 'birth_month_pes', 'year_birth_pes', 'relationship_hh_pes', 'sex_pes', 'marital_status_pes', 'Cluster_ID']].drop_duplicates() # Select columns
-CROW_records_1.columns = CROW_records_1.columns.str.rstrip('_cen')  # Remove suffixes
-CROW_records_2.columns = CROW_records_2.columns.str.rstrip('_pes')  # Remove suffixes
+CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '')
+CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '')
 CROW_records_1.rename(columns = {'Record_ID' : 'puid'}, inplace = True) # Rename ID column
 CROW_records_2.rename(columns = {'Record_ID' : 'puid'}, inplace = True) # Rename ID column
 CROW_records_1['Source_Dataset'] = 'cen' # Dataset indicator
