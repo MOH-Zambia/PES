@@ -3,13 +3,20 @@ import rapidfuzz
 import math
 import numpy as np
 
+
+import sys
+sys.path.insert(0, "../")
+from lib.PARAMETERS import *
+
+
+
 # ------------------------- #
 # --------- DATA ---------- #
 # ------------------------- #        
 
 # Read in mock census and PES data
-CEN = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
-PES = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
+CEN = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Census.csv')
+PES = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Pes.csv')
 
 # select needed columns
 CEN = CEN[['id_indi_cen', 'firstnm_cen', 'lastnm_cen', 'age_cen', 'month_cen', 'year_cen', 'sex_cen', 'province_cen']]
@@ -80,8 +87,8 @@ combined_blocks['lastnm_agreement'] = combined_blocks.apply(lambda x: SLD(x['las
 # --------------------------------------------------------- #
 
 # Read in M and U values
-m_values = pd.read_csv('Data/m_values.csv')
-u_values = pd.read_csv('Data/u_values.csv')
+m_values = pd.read_csv(DATA_PATH + 'm_values.csv')
+u_values = pd.read_csv(DATA_PATH + 'u_values.csv')
 
 # Save individual M values from file
 FN_M =  m_values[m_values.variable == 'firstnm'].iloc[0][1]
@@ -217,4 +224,4 @@ display(combined_blocks[cen_vars + pes_vars + ['match_score']].sort_values(by=['
 # --------------  SAVE ----------------- #
 # -------------------------------------- #
 
-combined_blocks.to_csv('Data/Probabilistic_Scores.csv')
+combined_blocks.to_csv(DATA_PATH + 'Probabilistic_Scores.csv')

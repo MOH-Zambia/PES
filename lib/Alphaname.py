@@ -2,16 +2,17 @@
 import pandas as pd
 import numpy as np
 import os
+from PARAMETERS import *
 
 # Cluster Function
-os.chdir("C:/Users/Rachel/Documents")
+
 
 # Read in the census data
-CEN = pd.read_csv('census_cleaned.csv', index_col=False)
+CEN = pd.read_csv(DATA_PATH + 'census_cleaned.csv', index_col=False)
 print("Census read in") 
 
 # Read in the PES data
-PES = pd.read_csv('pes_cleaned.csv', index_col=False)  
+PES = pd.read_csv(DATA_PATH + 'pes_cleaned.csv', index_col=False)  
 print("PES read in")
 
 # ------------------------------------------------------------------- #

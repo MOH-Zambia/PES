@@ -1,13 +1,16 @@
 import pandas as pd
 import numpy as np
+import sys
+sys.path.insert(0, "../")
+from lib.PARAMETERS import *
 
 # ------------------------------------- #
 # -- Create PES & CEN gold standard --- #
 # ------------------------------------- #
 
 # Read in mock census and PES data
-CEN = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
-PES = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
+CEN = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Census.csv')
+PES = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Pes.csv')
 
 # join on unique ID
 gold_standard = CEN.merge(PES, left_on = 'id_indi_cen', right_on = 'id_indi_pes', how = 'inner')
@@ -112,5 +115,5 @@ print(u_values)
 # ------------------------------------- #
 
 # Spark DataFrame
-m_values.to_csv('Data/m_values.csv', header = True, index = False)
-u_values.to_csv('Data/u_values.csv', header = True, index = False)
+m_values.to_csv(DATA_PATH + '/m_values.csv', header = True, index = False)
+u_values.to_csv(DATA_PATH + '/u_values.csv', header = True, index = False)

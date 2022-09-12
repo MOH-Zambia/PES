@@ -11,12 +11,20 @@ Created on Wed Feb  2 10:30:43 2022
 
 import pandas as pd
 import fuzzywuzzy as fz
+import os
+
 from fuzzywuzzy import process
+
+import sys
+sys.path.insert(0, "../")
+from lib.PARAMETERS import *
+
+
 
 # Read in synthetic data
 
-df1 = pd.read_csv('Data/Mock_Rwanda_Data_Census.csv')
-df2 = pd.read_csv('Data/Mock_Rwanda_Data_Pes.csv')
+df1 = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Census.csv')
+df2 = pd.read_csv(DATA_PATH + 'Mock_Rwanda_Data_Pes.csv')
     
 # You can also fuzzy match name using different string comparators. Here is an example of Levenshtein edit distance.
 # For this example I have just demonstrated using names so you can see the potential candidates 

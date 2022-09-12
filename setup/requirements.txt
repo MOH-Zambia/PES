@@ -4,3 +4,4 @@ numpy
 jellyfish
 fuzzywuzzy
 nltk
+warnings
