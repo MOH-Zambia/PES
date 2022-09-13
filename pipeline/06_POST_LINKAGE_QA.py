@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import functools
 import re
+import sys
+sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
 # Read in the census data

@@ -1,7 +1,9 @@
+# TODO add package version to this file (if required)
+python_version >= "3.3"
 pandas
 rapidfuzz
 numpy
 jellyfish
 fuzzywuzzy
 nltk
-warnings
+networkx >= 2.0

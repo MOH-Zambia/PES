@@ -7,7 +7,7 @@ import pandas as pd
 def cluster_number(df, id_1, id_2):
 
   # Columns
-  df_cluster = df[[id_1, id_2]]
+  df_cluster = df[[id_1, id_2]].copy()
 
   # Index column for graphs
   df_cluster['index'] = df_cluster.index
@@ -25,11 +25,11 @@ def cluster_number(df, id_1, id_2):
   for i, cc in enumerate(components, 1):
       idx = [dct['index'] for node1, node2, dct in cc.edges(data=True)]
       group = df_cluster.loc[idx]
-      group['Cluster_Number'] = i
+      group['Cluster_ID'] = i
       result.append(group)
     
   # Convert result to pandas dataframe
-  result = pd.concat(result).reset_index(drop = True)[[id_1, id_2, 'Cluster_Number']]
+  result = pd.concat(result).reset_index(drop = True)[[id_1, id_2, 'Cluster_ID']]
   
   # Join cluster number to full data  
   df = pd.merge(df, result, how = 'left', on = [id_1, id_2])
@@ -37,4 +37,4 @@ def cluster_number(df, id_1, id_2):
   return df
 
 
-output = cluster_number(df = , id_1 = '', id_2 = '')
+# output = cluster_number(df = df, id_1 = '', id_2 = '')
