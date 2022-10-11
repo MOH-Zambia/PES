@@ -18,102 +18,8 @@ print("Census read in")
 PES = pd.read_csv(DATA_PATH + 'pes_cleaned.csv', index_col=False)
 print("PES read in")
 
-# ----------------------------------------------------------------------- #
-# ----------------- STAGE 1: MATCHING WITHIN DISTRICT  ------------------ #
-# ----------------------------------------------------------------------- #    
+df = pd.read_csv(DATA_PATH + 'Stage_3_Within_District_Checkpoint.csv')
 
-# Read in all matches made so far
-prev_matches = pd.read_csv(DATA_PATH + 'Stage_2_All_Within_EA_Matches.csv')
-
-# CEN residuals
-CEN = CEN.merge(prev_matches[['puid_cen']], on='puid_cen', how='left', indicator=True)
-CEN = CEN[CEN['_merge'] == 'left_only'].drop('_merge', axis=1)
-
-# PES residuals
-PES = PES.merge(prev_matches[['puid_pes']], on='puid_pes', how='left', indicator=True)
-PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
-
-# Matchkey 1: Full Name + Year + Month + District
-matches_1 = pd.merge(left=CEN,
-                     right=PES,
-                     how="inner",
-                     left_on=['names_cen', 'year_birth_cen', 'birth_month_cen', 'DSid_cen'],
-                     right_on=['names_pes', 'year_birth_pes', 'birth_month_pes', 'DSid_pes'])
-
-# Matchkey 2: Edit Distance < 2 + Year + Month + District          
-matches_2 = pd.merge(left=CEN,
-                     right=PES,
-                     how="inner",
-                     left_on=['year_birth_cen', 'birth_month_cen', 'DSid_cen'],
-                     right_on=['year_birth_pes', 'birth_month_pes', 'DSid_pes'])
-matches_2['EDIT'] = matches_2[['names_cen', 'names_pes']].apply(
-    lambda x: jellyfish.levenshtein_distance(str(x[0]), str(x[1])), axis=1)
-matches_2 = matches_2[matches_2.EDIT < 2]
-
-#
-# Add extra MKs here within district
-#
-
-
-# List of matchkey results
-matches_list = [matches_1, matches_2]
-
-# Start with results from MK1 (i=0)
-i = 0
-
-# Empty DataFrame
-df = pd.DataFrame()
-
-# Combine results, assign matchkey number and deduplicate
-for matches in matches_list:
-    # Next matchkey to add + MK number
-    matches = matches_list[i]
-    matches['MK'] = i + 1
-
-    # Combine        
-    df = df.append(matches)
-
-    # Identify the lowest MK number for exact duplicates
-    df['Min_MK'] = df.groupby(['puid_cen', 'puid_pes'])['MK'].transform('min')
-
-    # Deduplicate (e.g. A-B on MK1 and A-B on MK2)
-    df = df[df.Min_MK == df.MK]
-
-    # Move onto next matchkey
-    i += 1
-
-# ----------------------------------------------------------------------- #
-# ------------ STAGE 2: RESOLVE WITHIN DISTRICT CONFLICTS --------------- #
-# ----------------------------------------------------------------------- #        
-
-# Find CEN or PES IDs matched to mutliple records
-df['ID_count_1'] = df.groupby(['puid_cen'])['puid_pes'].transform('count')
-df['ID_count_2'] = df.groupby(['puid_pes'])['puid_cen'].transform('count')
-
-# Clerical resolution indicator for conflicts
-# "If either of the counts are greater than 1, then send records to CROW"
-df['CLERICAL'] = np.where(((df['ID_count_1'] > 1) | (df['ID_count_2'] > 1)), 1, 0)
-
-# Filter records for clerical
-CROW_records = df[df['CLERICAL'] == 1]
-
-# Save records for clerical in the correct format for CROW
-CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes')  # Add cluster ID
-CROW_records_1 = CROW_records[
-    ['puid_cen', 'hhid_cen', 'names_cen', 'birth_month_cen', 'year_birth_cen', 'relationship_hh_cen', 'sex_cen',
-     'marital_status_cen', 'Cluster_ID']].drop_duplicates()  # Select columns
-CROW_records_2 = CROW_records[
-    ['puid_pes', 'hhid_pes', 'names_pes', 'birth_month_pes', 'year_birth_pes', 'relationship_hh_pes', 'sex_pes',
-     'marital_status_pes', 'Cluster_ID']].drop_duplicates()  # Select columns
-CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '')
-CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '')
-CROW_records_1.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
-CROW_records_2.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
-CROW_records_1['Source_Dataset'] = 'cen'  # Dataset indicator
-CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
-CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(
-    ['Cluster_ID'])  # Combine two dataets together
-CROW_records_final.to_csv(DATA_PATH + 'Stage_3_Within_DS_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
 
 # --------------------------- CLERICAL MATCHING -----------------------------------#
 
@@ -136,7 +42,7 @@ df = df[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # ----------------------------------------------------------------------- #
 # ----------- STAGE 3: WITHIN DISTRICT ASSOCIATIVE MATCHING ------------- #
-# ----------------------------------------------------------------------- #  
+# ----------------------------------------------------------------------- #
 
 # CEN residuals - only use census records that have not been matched yet
 CEN_R = CEN.merge(df[['puid_cen']], on='puid_cen', how='left', indicator=True)
@@ -185,19 +91,16 @@ print("Associative matchkeys complete")
 # List of matchkey results
 assoc_matches_list = [assoc_matches_1, assoc_matches_2, assoc_matches_3, assoc_matches_4]
 
-# Start with results from MK1 (i=0)
-i = 0
 
 # Empty DataFrame
 df2 = pd.DataFrame()
 
 # Combine results, assign matchkey number and deduplicate
-for assoc_matches in assoc_matches_list:
+for i, assoc_matches in enumerate(assoc_matches_list):
     # Next matchkey to add + MK number
-    assoc_matches = assoc_matches_list[i]
     assoc_matches['MK'] = i + 1
 
-    # Combine        
+    # Combine
     df2 = df2.append(assoc_matches)
 
     # Identify the lowest MK number for exact duplicates
@@ -207,11 +110,11 @@ for assoc_matches in assoc_matches_list:
     df2 = df2[df2.Min_MK == df2.MK]
 
     # Move onto next matchkey
-    i += 1
+
 
 # ------------------------------------------------------------------------ #
 # ---------- STAGE 4: RESOLVE ASSOCIATIVE MATCHING CONFLICTS ------------- #
-# ------------------------------------------------------------------------ #        
+# ------------------------------------------------------------------------ #
 
 # Find CEN or PES IDs matched to multiple records
 df2['ID_count_1'] = df2.groupby(['puid_cen'])['puid_pes'].transform('count')
@@ -228,6 +131,8 @@ df2['CLERICAL'] = 0
 df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # Combine all matches together
+# Read in all matches made so far
+prev_matches = pd.read_csv(DATA_PATH + 'Stage_2_All_Within_EA_Matches.csv')
 df3 = pd.concat([prev_matches, df, df2])
 
 # Save

@@ -1,4 +1,5 @@
 " Rwanda synthetic data - deterministic linkage example"
+# TODO strip out pyspark code and rewrite
 
 """ Matching vars - 
     Full_name

@@ -12,7 +12,7 @@ This directory contains scripts to help explain record linkage concepts such as 
 * `Alphaname.py` contains the function to create alphanames which is a common match key for names 
 
 
-### Probability matching
+### Probabilistic matching
 * `m_u_values.py` calculates m and u probabilities needed for probabilistic matching, using a lookup of true match status of the records being compared. **Note: this is a simplified example as we won't know the true match status when matching PES to Census!** This will need to be ran ahead of running `Probabilistic_matching.py`
 * `EM.py` contains a Python implementation of the Expectation-Maximisation algorithm for estimating m and u probabilities
 * `Probabilistic_matching.py` runs Fellegi-Sunter probabilistic matching, using the M and U parameters previously calculated in `m_u_values.py`

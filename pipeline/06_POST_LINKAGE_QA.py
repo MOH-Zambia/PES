@@ -108,7 +108,7 @@ CEN.last_name_cen.isnull()
 CEN.first_name_cen.isin(['CHARLIE', 'CHARLES', 'CHAZ'])
 
 
-# Wildard - Search for a name and allow for one or more characters where the .+ is
+# Wildcard - Search for a name and allow for one or more characters where the .+ is
 #  e.g. CHARLIE, CHABLIE, CHARLLE, CHRALIE, CHALRIE, CHAARLIE etc.
 def wildcard(string):
     if re.search('CH.+IE', string):

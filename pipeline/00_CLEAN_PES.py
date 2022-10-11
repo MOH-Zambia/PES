@@ -2,26 +2,21 @@
 import pandas as pd
 import os
 import sys
+
 sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
-# Read in cleaned census
-CEN = pd.read_csv(DATA_PATH + 'census_cleaned.csv')
+# Read in PILOT
+PES = pd.read_csv(PES_FILE_PATH)
 
-# Sample of households for PES
-pes_hh_sample = CEN['hhid_cen'].drop_duplicates().sample(200)
-
-# Take sample from census
-PES = pd.merge(CEN, pes_hh_sample, on='hhid_cen', how='inner')
-
-# Remove '_cen' suffixes from PES columns
-PES.columns = PES.columns.str.rstrip('_cen')
-
-# PES Suffixes
-PES = PES.add_suffix('_pes')
+# Select columns needed throughout entire linkage process
+PES = PES[['hid_pes', 'id_indi_pes', 'firstnm_pes', 'middlenm_pes', 'lastnm_pes', 'fullnm_pes', 'province_pes',
+           'district_pes', 'sector_pes', 'cellule_pes', 'village_pes', 'month_pes', 'year_pes', 'age_pes', 'HoH_pes',
+           'marstat_pes', 'marstatdesc_pes', 'relationship_pes', 'sex_pes', 'telephone_pes', 'lat_pes', 'long_pes',
+           'full_loc_pes']]
 
 # Save PES before adding error
-PES.to_csv(DATA_PATH + 'pes_cleaned.csv', header=True)
+PES.to_csv(DATA_PATH + 'pes_cleaned.csv', header=True, index=0)
 
 """
 After running this script, error should be added to the PES dataset manually, 

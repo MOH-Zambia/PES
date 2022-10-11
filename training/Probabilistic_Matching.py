@@ -7,6 +7,8 @@ import sys
 sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
+# TODO need to QA this
+
 # ------------------------- #
 # --------- DATA ---------- #
 # ------------------------- #        
