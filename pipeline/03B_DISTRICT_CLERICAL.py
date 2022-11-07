@@ -4,11 +4,12 @@ import numpy as np
 import jellyfish
 import os
 import sys
+
 sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
 # Functions
-from lib.Cluster_Function import cluster_number
+from lib.CROW_cluster_output_updater import CROW_output_updater
 
 # Read in the census data
 CEN = pd.read_csv(DATA_PATH + 'census_cleaned.csv', index_col=False)
@@ -18,14 +19,16 @@ print("Census read in")
 PES = pd.read_csv(DATA_PATH + 'pes_cleaned.csv', index_col=False)
 print("PES read in")
 
-df = pd.read_csv(DATA_PATH + 'Stage_3_Within_District_Checkpoint.csv')
-
+df = pd.read_csv(CHECKPOINT_PATH + 'Stage_3_Within_District_Checkpoint.csv')
 
 # --------------------------- CLERICAL MATCHING -----------------------------------#
 
 
 # Open clerical results from CROW
-clerical_results = pd.read_csv(DATA_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_DONE.csv')
+clerical_results = pd.read_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_DONE.csv')
+clerical_results = CROW_output_updater(output_df=clerical_results, ID_column='puid', Source_column='Source_Dataset',
+                                       df1_name='cen', df2_name='pes')
+clerical_results.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_Reformatted.csv')
 clerical_results['clerical_match'] = 1
 
 # Join clerical results onto matches
@@ -38,7 +41,7 @@ df = df[((df['CLERICAL'] == 0) | (df['clerical_match'] == 1))]
 df['Match_Type'] = "Within_DS_Matchkey"
 
 # Columns to keep
-df = df[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
+df = df[['puid_cen', 'puid_pes', 'hid_cen', 'hid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # ----------------------------------------------------------------------- #
 # ----------- STAGE 3: WITHIN DISTRICT ASSOCIATIVE MATCHING ------------- #
@@ -53,11 +56,11 @@ PES_R = PES.merge(df[['puid_pes']], on='puid_pes', how='left', indicator=True)
 PES_R = PES_R[PES_R['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect HH ID pairs from matches made so far
-HH_pairs = df[['hhid_cen', 'hhid_pes']].drop_duplicates()
+HH_pairs = df[['hid_cen', 'hid_pes']].drop_duplicates()
 
 # Join HH ID pairs onto census/PES residuals (inner join keeps only records where 1+ person from census/PES HH already matched)
-CEN_R = CEN_R.merge(HH_pairs, on='hhid_cen', how='inner')
-PES_R = PES_R.merge(HH_pairs, on='hhid_pes', how='inner')
+CEN_R = CEN_R.merge(HH_pairs, on='hid_cen', how='inner')
+PES_R = PES_R.merge(HH_pairs, on='hid_pes', how='inner')
 
 # Can now apply rules to match candidates within households already containing 1+ person match
 # ('HH_ID_cen', 'HH_ID_pes') <- This part is the associative part of the matchkeys
@@ -65,32 +68,31 @@ PES_R = PES_R.merge(HH_pairs, on='hhid_pes', how='inner')
 assoc_matches_1 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_2 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_3 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_4 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 print("Associative matchkeys complete")
 
 # List of matchkey results
 assoc_matches_list = [assoc_matches_1, assoc_matches_2, assoc_matches_3, assoc_matches_4]
-
 
 # Empty DataFrame
 df2 = pd.DataFrame()
@@ -101,7 +103,7 @@ for i, assoc_matches in enumerate(assoc_matches_list):
     assoc_matches['MK'] = i + 1
 
     # Combine
-    df2 = df2.append(assoc_matches)
+    df2 = pd.concat([df2, assoc_matches])
 
     # Identify the lowest MK number for exact duplicates
     df2['Min_MK'] = df2.groupby(['puid_cen', 'puid_pes'])['MK'].transform('min')
@@ -110,7 +112,6 @@ for i, assoc_matches in enumerate(assoc_matches_list):
     df2 = df2[df2.Min_MK == df2.MK]
 
     # Move onto next matchkey
-
 
 # ------------------------------------------------------------------------ #
 # ---------- STAGE 4: RESOLVE ASSOCIATIVE MATCHING CONFLICTS ------------- #
@@ -132,8 +133,8 @@ df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # Combine all matches together
 # Read in all matches made so far
-prev_matches = pd.read_csv(DATA_PATH + 'Stage_2_All_Within_EA_Matches.csv')
+prev_matches = pd.read_csv(OUTPUT_PATH + 'Stage_2_All_Within_EA_Matches.csv')
 df3 = pd.concat([prev_matches, df, df2])
 
 # Save
-df3.to_csv(DATA_PATH + 'Stage_3_All_Within_DS_Matches.csv', header=True)
+df3.to_csv(OUTPUT_PATH + 'Stage_3_All_Within_DS_Matches.csv', header=True)

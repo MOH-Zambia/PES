@@ -21,7 +21,7 @@ print("PES read in")
 # ---------------------------------------------------------------------- #    
 
 # Read in all matches made so far
-prev_matches = pd.read_csv(DATA_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv')
+prev_matches = pd.read_csv(OUTPUT_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv')
 
 # CEN residuals
 CEN = CEN.merge(prev_matches[['puid_cen']], on='puid_cen', how='left', indicator=True)
@@ -35,8 +35,8 @@ PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 matches_1 = pd.merge(left=CEN,
                      right=PES,
                      how="inner",
-                     left_on=['names_cen', 'year_birth_cen', 'birth_month_cen', 'sex_cen'],
-                     right_on=['names_pes', 'year_birth_pes', 'birth_month_pes', 'sex_pes'])
+                     left_on=['names_cen', 'year_cen', 'month_cen', 'sex_cen'],
+                     right_on=['names_pes', 'year_pes', 'month_pes', 'sex_pes'])
 
 # List of matchkey results
 matches_list = [matches_1]
@@ -78,7 +78,7 @@ df['Match_Type'] = "Within_Country_Matchkey"
 df['CLERICAL'] = 0
 
 # Columns to keep
-df = df[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
+df = df[['puid_cen', 'puid_pes', 'hid_cen', 'hid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 
 # ---------------------------------------------------------------------- #
 # ----------- STAGE 3: WITHIN COUNTRY ASSOCIATIVE MATCHING ------------- #
@@ -93,38 +93,38 @@ PES_R = PES.merge(df[['puid_pes']], on='puid_pes', how='left', indicator=True)
 PES_R = PES_R[PES_R['_merge'] == 'left_only'].drop('_merge', axis=1)
 
 # Collect HH ID pairs from matches made so far
-HH_pairs = df[['hhid_cen', 'hhid_pes']].drop_duplicates()
+HH_pairs = df[['hid_cen', 'hid_pes']].drop_duplicates()
 
 # Join HH ID pairs onto census/PES residuals (inner join keeps only records where 1+ person from census/PES HH already matched)
-CEN_R = CEN_R.merge(HH_pairs, on='hhid_cen', how='inner')
-PES_R = PES_R.merge(HH_pairs, on='hhid_pes', how='inner')
+CEN_R = CEN_R.merge(HH_pairs, on='hid_cen', how='inner')
+PES_R = PES_R.merge(HH_pairs, on='hid_pes', how='inner')
 
 # Can now apply rules to match candidates within households already containing 1+ person match
-# ('HH_ID_cen', 'HH_ID_pes') <- This part is the associative part of the matchkeys
+# ('H_ID_cen', 'H_ID_pes') <- This part is the associative part of the matchkeys
 
 assoc_matches_1 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_2 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_3 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 assoc_matches_4 = pd.merge(left=CEN_R,
                            right=PES_R,
                            how="inner",
-                           left_on=['forename_cen', 'dob_cen', 'hhid_cen', 'hhid_pes'],
-                           right_on=['forename_pes', 'dob_pes', 'hhid_cen', 'hhid_pes'])
+                           left_on=['forename_cen', 'dob_cen', 'hid_cen', 'hid_pes'],
+                           right_on=['forename_pes', 'dob_pes', 'hid_cen', 'hid_pes'])
 
 print("Associative matchkeys complete")
 
@@ -173,4 +173,4 @@ df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 df3 = pd.concat([prev_matches, df, df2])
 
 # Save
-df3.to_csv(DATA_PATH + 'Stage_5_All_Within_Country_Matches.csv', header=True)
+df3.to_csv(OUTPUT_PATH + 'Stage_5_All_Within_Country_Matches.csv', header=True)

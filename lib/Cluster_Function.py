@@ -23,14 +23,19 @@ def cluster_number(df, id_1, id_2):
     for i, cc in enumerate(components, 1):
         idx = [dct['index'] for node1, node2, dct in cc.edges(data=True)]
         group = df_cluster.loc[idx]
-        group['Cluster_ID'] = i
+        group['Cluster_Number'] = i
         result.append(group)
 
     # Convert result to pandas dataframe
-    result = pd.concat(result).reset_index(drop=True)[[id_1, id_2, 'Cluster_ID']]
+    if len(result)>1:
+        result = pd.concat(result).reset_index(drop=True)[[id_1, id_2, 'Cluster_Number']]
 
-    # Join cluster number to full data
-    df = pd.merge(df, result, how='left', on=[id_1, id_2])
+        # Join cluster number to full data
+        df = pd.merge(df, result, how='left', on=[id_1, id_2])
+
+    else:
+        print("No clusters to merge")
+        df["Cluster_Number"] = None
 
     return df
 

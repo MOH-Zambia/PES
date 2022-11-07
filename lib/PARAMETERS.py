@@ -10,6 +10,12 @@ DATA_PATH = "Data/"
 
 LIB_PATH = "lib/"
 
+CHECKPOINT_PATH = DATA_PATH + "Checkpoints/"
+
+CLERICAL_PATH = DATA_PATH + "Clerical files/"
+
+OUTPUT_PATH = DATA_PATH + "Outputs/"
+
 # TODO add in column choice for census and pes as two variables
 
 CENSUS_FILE_NAME = "Mock_Rwanda_Data_Census.csv"

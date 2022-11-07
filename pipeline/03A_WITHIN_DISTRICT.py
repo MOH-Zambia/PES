@@ -23,7 +23,7 @@ print("PES read in")
 # ----------------------------------------------------------------------- #    
 
 # Read in all matches made so far
-prev_matches = pd.read_csv(DATA_PATH + 'Stage_2_All_Within_EA_Matches.csv')
+prev_matches = pd.read_csv(OUTPUT_PATH + 'Stage_2_All_Within_EA_Matches.csv')
 
 # CEN residuals
 CEN = CEN.merge(prev_matches[['puid_cen']], on='puid_cen', how='left', indicator=True)
@@ -37,15 +37,15 @@ PES = PES[PES['_merge'] == 'left_only'].drop('_merge', axis=1)
 matches_1 = pd.merge(left=CEN,
                      right=PES,
                      how="inner",
-                     left_on=['names_cen', 'year_birth_cen', 'birth_month_cen', 'DSid_cen'],
-                     right_on=['names_pes', 'year_birth_pes', 'birth_month_pes', 'DSid_pes'])
+                     left_on=['names_cen', 'year_cen', 'month_cen', 'DSid_cen'],
+                     right_on=['names_pes', 'year_pes', 'month_pes', 'DSid_pes'])
 
 # Matchkey 2: Edit Distance < 2 + Year + Month + District          
 matches_2 = pd.merge(left=CEN,
                      right=PES,
                      how="inner",
-                     left_on=['year_birth_cen', 'birth_month_cen', 'DSid_cen'],
-                     right_on=['year_birth_pes', 'birth_month_pes', 'DSid_pes'])
+                     left_on=['year_cen', 'month_cen', 'DSid_cen'],
+                     right_on=['year_pes', 'month_pes', 'DSid_pes'])
 matches_2['EDIT'] = matches_2[['names_cen', 'names_pes']].apply(
     lambda x: jellyfish.levenshtein_distance(str(x[0]), str(x[1])), axis=1)
 matches_2 = matches_2[matches_2.EDIT < 2]
@@ -90,7 +90,7 @@ df['ID_count_2'] = df.groupby(['puid_pes'])['puid_cen'].transform('count')
 # Clerical resolution indicator for conflicts
 # "If either of the counts are greater than 1, then send records to CROW"
 df['CLERICAL'] = np.where(((df['ID_count_1'] > 1) | (df['ID_count_2'] > 1)), 1, 0)
-df.to_csv(DATA_PATH + 'Stage_3_Within_District_Checkpoint.csv', header=True)
+df.to_csv(CHECKPOINT_PATH + 'Stage_3_Within_District_Checkpoint.csv', header=True)
 
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
@@ -98,18 +98,18 @@ CROW_records = df[df['CLERICAL'] == 1]
 # Save records for clerical in the correct format for CROW
 CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes')  # Add cluster ID
 CROW_records_1 = CROW_records[
-    ['puid_cen', 'hhid_cen', 'names_cen', 'birth_month_cen', 'year_birth_cen', 'relationship_hh_cen', 'sex_cen',
-     'marital_status_cen', 'Cluster_ID']].drop_duplicates()  # Select columns
+    ['puid_cen', 'hid_cen', 'names_cen', 'dob_cen', 'month_cen', 'year_cen', 'relationship_cen', 'sex_cen',
+     'marstatdesc_cen', 'Cluster_Number']].drop_duplicates()  # Select columns
 CROW_records_2 = CROW_records[
-    ['puid_pes', 'hhid_pes', 'names_pes', 'birth_month_pes', 'year_birth_pes', 'relationship_hh_pes', 'sex_pes',
-     'marital_status_pes', 'Cluster_ID']].drop_duplicates()  # Select columns
-CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '')
-CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '')
+    ['puid_pes', 'hid_pes', 'names_pes', 'dob_pes', 'month_pes', 'year_pes', 'relationship_pes', 'sex_pes',
+     'marstatdesc_pes', 'Cluster_Number']].drop_duplicates()  # Select columns
+CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '', regex=True)
+CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '', regex=True)
 CROW_records_1.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
 CROW_records_2.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
 CROW_records_1['Source_Dataset'] = 'cen'  # Dataset indicator
 CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
 
 # Combine two datasets together
-CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(['Cluster_ID'])
-CROW_records_final.to_csv(DATA_PATH + 'Stage_3_Within_DS_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
+CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(['Cluster_Number'])
+CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical.csv', header=True)  # Save ready for CROW

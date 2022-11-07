@@ -18,7 +18,7 @@ PES = pd.read_csv(DATA_PATH + 'pes_cleaned.csv', index_col=False)
 print("PES read in")
 
 # Read in all matches made so far
-prev_matches = pd.read_csv(DATA_PATH + 'Stage_3_All_Within_DS_Matches.csv')
+prev_matches = pd.read_csv(OUTPUT_PATH + 'Stage_3_All_Within_DS_Matches.csv')
 
 # --------------------------- CLERICAL MATCHING IN EXCEL -----------------------------------#
 # Collect DataFrame of unique PES EAs
@@ -32,10 +32,10 @@ all_ea_results = pd.DataFrame()
 for EA in PES_EA_list.EAid_cen.values.tolist():
 
     # Only loop through EAs where at least one match was made
-    if os.path.exists('Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA))):
+    if os.path.exists(CLERICAL_PATH + "Stage_4/"+'Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA))):
 
         # Read in results from an EA
-        ea_results = pd.read_csv(DATA_PATH + 'Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
+        ea_results = pd.read_csv(CLERICAL_PATH + "Stage_4/" + 'Stage_4_Within_EA_Clerical_Search_EA{}_DONE.csv'.format(str(EA)))
 
         # Take columns needed
         ea_results = ea_results[['puid_cen', 'puid_pes']]
@@ -45,6 +45,12 @@ for EA in PES_EA_list.EAid_cen.values.tolist():
 
     else:
         warnings.warn("No clerical search matches made from EA{}".format(str(EA)))
+
+
+if len(all_ea_results) <1:
+    warnings.warn("No clerical search matches made from any EA!")
+    all_ea_results[['puid_cen', 'puid_pes']] = None, None
+
 
 # Add Indicators so that previous matches will concat with new matches
 all_ea_results['Match_Type'] = "Within_EA_Clerical_Search"
@@ -58,4 +64,4 @@ all_ea_results = all_ea_results[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CL
 df3 = pd.concat([prev_matches, all_ea_results])
 
 # Save
-df3.to_csv(DATA_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv', header=True)
+df3.to_csv(CLERICAL_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv', header=True)
