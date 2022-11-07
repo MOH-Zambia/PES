@@ -3,13 +3,16 @@ import pandas as pd
 import numpy as np
 import functools
 import re
+import sys
+sys.path.insert(0, "../")
+from lib.PARAMETERS import *
 
 # Read in the census data
-CEN = pd.read_csv('census_cleaned.csv', index_col=False)
-print("Census read in") 
+CEN = pd.read_csv(DATA_PATH + 'census_cleaned.csv', index_col=False)
+print("Census read in")
 
 # Read in the PES data
-PES = pd.read_csv('pes_cleaned.csv', index_col=False)  
+PES = pd.read_csv(DATA_PATH + 'pes_cleaned.csv', index_col=False)
 print("PES read in")
 
 # -------------------------------------------------------------------- #
@@ -17,7 +20,7 @@ print("PES read in")
 # -------------------------------------------------------------------- #    
 
 # Sample of 100 unmatched PES records
-unmatched_PES = pd.read_csv('Stage_6_Unmatched_PES_Sample.csv') # 100
+unmatched_PES = pd.read_csv(DATA_PATH + 'Stage_6_Unmatched_PES_Sample.csv')  # 100
 
 """
 HOW TO RUN CLERICAL SEARCH USING UNMATCHED PES SAMPLE:
@@ -53,10 +56,12 @@ target_household = PES[PES.hhid_pes == target_household_ID][pes_variables]
    Comment out filters not used and add in any extras if you find they work better at finding matches
    Potential census matches ("census_candidates") can be viewed in the variable explorer
 """
-    
+
+
 # Function to combine and apply multiple filters to the census dataset
 def conjunction(*conditions):
     return functools.reduce(np.logical_and, conditions)
+
 
 # ------------------------------------------------ #
 # ------ ADD LIST OF CENSUS FILTERS BELOW  ------- #
@@ -83,14 +88,9 @@ print("Search has produced {} potential census match/matches".format(len(census_
 census_household_ID = CEN[CEN.puid_cen == '111']['hhid_cen'][0]
 census_household = CEN[CEN.hhid_cen == census_household_ID][cen_variables]
 
-
-
-
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------- #
-
-
 
 
 """
@@ -107,31 +107,24 @@ CEN.last_name_cen.isnull()
 # Filter multiple possible first names
 CEN.first_name_cen.isin(['CHARLIE', 'CHARLES', 'CHAZ'])
 
-# Wildard - Search for a name and allow for one or more characters where the .+ is
+
+# Wildcard - Search for a name and allow for one or more characters where the .+ is
 #  e.g. CHARLIE, CHABLIE, CHARLLE, CHRALIE, CHALRIE, CHAARLIE etc.
 def wildcard(string):
-    if re.search('CH.+IE',string): return True
-    else: return False
-  
+    if re.search('CH.+IE', string):
+        return True
+    else:
+        return False
+
+
 # Apply wildcard filter
 CEN.first_name_cen.apply(wildcard)
 
 # Other variables to filter on:
-    # Head of Household
-    # Relationship to Head of Household 
-    # Marital Status
-    # Different levels of geography e.g. HH, EA, District
-
-  
-
-
-
-
-
-
-
-
-
+# Head of Household
+# Relationship to Head of Household
+# Marital Status
+# Different levels of geography e.g. HH, EA, District
 
 
 PES = pd.DataFrame({'puid_pes': ['111', '222', '333', '444', '555'],
