@@ -21,9 +21,24 @@ for column in ['hid_cen', 'puid_cen', 'forename_cen', 'middlenm_cen', 'last_name
            'HoH_cen', 'marstat_cen', 'marstatdesc_cen', 'relationship_cen', 'sex_cen', 'telephone_cen', 'lat_cen',
            'long_cen', 'full_loc_cen', "EAid_cen", "DSid_cen"]:
     CEN[column] = CEN[column].astype(str)
-
+    
+# Dervive DOB
 CEN["dob_cen"] = CEN["month_cen"] + "/" + CEN["year_cen"]
 
+# Remove duplicate puids
+CEN = CEN.drop_duplicates(['puid_cen'])
+
+# Add 'CEN_' infront of all puids
+CEN['puid_cen'] = 'CEN_' + CEN['puid_cen']
+
+# # District / EA / HH / Person unique identifiers
+# CEN['DSid_cen'] = CEN['province_cen'] + CEN['district_cen']
+# CEN['EAid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
+#                   CEN['village_cen']
+# CEN['hhid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
+#                   CEN['village_cen']
+# CEN['puid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
+#                   CEN['village_cen'] + CEN['person_id_cen']
 
 # Save
 CEN.to_csv(DATA_PATH + 'census_cleaned.csv', header=True, index=0)
