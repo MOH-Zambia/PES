@@ -9,7 +9,7 @@ from lib.PARAMETERS import *
 def CROW_output_updater(output_df, ID_column, Source_column, df1_name, df2_name):
     '''
     Returns the outputs of CROW in a pairwise linked format
-    
+
     Parameters
     ----------
     output_df: dataframe
