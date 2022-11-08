@@ -24,14 +24,6 @@ for column in ['hid_cen', 'puid_cen', 'forename_cen', 'middlenm_cen', 'last_name
 
 CEN["dob_cen"] = CEN["month_cen"] + "/" + CEN["year_cen"]
 
-# # District / EA / HH / Person unique identifiers
-# CEN['DSid_cen'] = CEN['province_cen'] + CEN['district_cen']
-# CEN['EAid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
-#                   CEN['village_cen']
-# CEN['hhid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
-#                   CEN['village_cen']
-# CEN['puid_cen'] = CEN['province_cen'] + CEN['district_cen'] + CEN['sector_cen'] + CEN['cellule_cen'] + \
-#                   CEN['village_cen'] + CEN['person_id_cen']
 
 # Save
 CEN.to_csv(DATA_PATH + 'census_cleaned.csv', header=True, index=0)
