@@ -4,6 +4,7 @@ import numpy as np
 import jellyfish
 import os
 import sys
+
 sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
@@ -95,9 +96,16 @@ matches_9['EDIT2'] = matches_9[['last_name_pes', 'forename_cen']].apply(
     lambda x: jellyfish.levenshtein_distance(str(x[0]), str(x[1])), axis=1)
 matches_9 = matches_9[(matches_9.EDIT1 < 2) | (matches_9.EDIT2 < 2)]
 
+# matchkey 10: loose example MK that would generate non-unique matches
+matches_10 = pd.merge(left=CEN,
+                      right=PES,
+                      how="inner",
+                      left_on=["year_cen", "hid_cen"],
+                      right_on=["year_pes", "hid_pes"])
+
 # List of matchkey results
 matches_list = [matches_1, matches_2, matches_3, matches_4, matches_5,
-                matches_6, matches_7, matches_8, matches_9]
+                matches_6, matches_7, matches_8, matches_9, matches_10]
 
 # Empty DataFrame
 df = pd.DataFrame()
@@ -141,23 +149,18 @@ df.to_csv(CHECKPOINT_PATH + 'Stage_1_Within_HH_Checkpoint.csv', header=True)
 CROW_records = df[df['CLERICAL'] == 1]
 
 # Add cluster number to records
-CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes')  # Add cluster ID
+CROW_records = cluster_number(CROW_records, id_column='puid', suffix_1="_cen", suffix_2="_pes")  # Add cluster ID
 
 # Use this to create a cluster number if the line above is not working. 
 # Note: This will not cluster together non-unique matches; every pair will be sent separately.
 # CROW_records['Cluster_Number'] = np.arange(len(CROW_records))
 
 # Save records for clerical in the correct format for CROW
-CROW_records_1 = CROW_records[
-    ['puid_cen', 'hid_cen', 'names_cen', 'dob_cen', 'month_cen', 'year_cen', 'relationship_cen', 'sex_cen',
-     'marstat_cen', 'Cluster_Number']].drop_duplicates()  # Select columns
-CROW_records_2 = CROW_records[
-    ['puid_pes', 'hid_pes', 'names_pes', 'dob_pes', 'month_pes', 'year_pes', 'relationship_pes', 'sex_pes',
-     'marstat_pes', 'Cluster_Number']].drop_duplicates()  # Select columns
+CROW_variables = ['puid', 'hid', 'names', 'dob', 'month', 'year', 'relationship', 'sex', 'marstat']
+CROW_records_1 = CROW_records[[var + "_cen" for var in CROW_variables] + ['Cluster_Number']].drop_duplicates()
+CROW_records_2 = CROW_records[[var + "_pes" for var in CROW_variables] + ['Cluster_Number']].drop_duplicates()
 CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '', regex=True)
 CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '', regex=True)
-CROW_records_1.rename(columns={'Record_ID': 'id_indi'}, inplace=True)  # Rename ID column
-CROW_records_2.rename(columns={'Record_ID': 'id_indi'}, inplace=True)  # Rename ID column
 CROW_records_1['Source_Dataset'] = 'cen'  # Dataset indicator
 CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
 CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(
