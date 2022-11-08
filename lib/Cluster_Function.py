@@ -3,40 +3,28 @@ import pandas as pd
 
 
 # Cluster Number function
-def cluster_number(df, id_1, id_2):
+def cluster_number(df, id_column='puid', suffix_1="_cen", suffix_2="_pes"):
     # Columns
+    id_1 = id_column + suffix_1
+    id_2 = id_column + suffix_2
     df_cluster = df[[id_1, id_2]].copy()
 
-    # Index column for graphs
-    df_cluster['index'] = df_cluster.index
+    G = nx.from_edgelist(df_cluster.to_numpy().tolist())
 
-    # Create graph & connected components
-    G = nx.from_pandas_edgelist(df_cluster, id_1, id_2, 'index')
+    results = []
+    for i, item in enumerate(list(nx.connected_components(G))):
+        for ids in item:
+            results.append([ids, i + 1])
 
-    # components = nx.connected_component_subgraphs(G)
-    components = [G.subgraph(c) for c in nx.connected_components(G)]
+    results_df = pd.DataFrame(results, columns=[id_column, "Cluster_Number"])
+    df_merged = df.merge(results_df, how="inner", left_on=id_1, right_on=id_column)
 
-    # empty list to append results to
-    result = []
+    return df_merged
 
-    # Loop over components, giving each cluster a cluster number
-    for i, cc in enumerate(components, 1):
-        idx = [dct['index'] for node1, node2, dct in cc.edges(data=True)]
-        group = df_cluster.loc[idx]
-        group['Cluster_Number'] = i
-        result.append(group)
-
-    # Convert result to pandas dataframe
-    if len(result)>1:
-        result = pd.concat(result).reset_index(drop=True)[[id_1, id_2, 'Cluster_Number']]
-
-        # Join cluster number to full data
-        df = pd.merge(df, result, how='left', on=[id_1, id_2])
-
-    else:
-        print("No clusters to merge")
-        df["Cluster_Number"] = None
-
-    return df
-
-# output = cluster_number(df = df, id_1 = '', id_2 = '')
+# ## test code
+# df = pd.DataFrame({"id_1":["C1","C2","C3","C4","C5","C6","C7","C8","C9","C10","C1"],
+#                    "id_2":["P1","P1","P2","P1","P3","P5","P3","P8","P9","P8", "P11"]})
+#
+#
+# output = cluster_number(df = df, id_column='id', suffix_1="_1", suffix_2="_2")
+# print(output)
