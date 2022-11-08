@@ -146,20 +146,19 @@ df.to_csv(CHECKPOINT_PATH + 'Stage_2_Within_EA_Checkpoint.csv', header=True)
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
 
+
+# Add cluster number to records
+CROW_records = cluster_number(CROW_records, id_column='puid', suffix_1="_cen", suffix_2="_pes")  # Add cluster ID
+
 # Save records for clerical in the correct format for CROW
-CROW_records = cluster_number(CROW_records, 'puid_cen', 'puid_pes')  # Add cluster ID
-CROW_records_1 = CROW_records[
-    ['puid_cen', 'hid_cen', 'names_cen', 'dob_cen', 'month_cen', 'year_cen', 'relationship_cen', 'sex_cen',
-     'marstatdesc_cen', 'Cluster_Number']].drop_duplicates()  # Select columns
-CROW_records_2 = CROW_records[
-    ['puid_pes', 'hid_pes', 'names_pes', 'dob_pes','month_pes', 'year_pes', 'relationship_pes', 'sex_pes',
-     'marstatdesc_pes', 'Cluster_Number']].drop_duplicates()  # Select columns
+CROW_variables = ['puid', 'hid', 'names', 'dob', 'month', 'year', 'relationship', 'sex', 'marstat']
+CROW_records_1 = CROW_records[[var + "_cen" for var in CROW_variables] + ['Cluster_Number']].drop_duplicates()
+CROW_records_2 = CROW_records[[var + "_pes" for var in CROW_variables] + ['Cluster_Number']].drop_duplicates()
 CROW_records_1.columns = CROW_records_1.columns.str.replace(r'_cen$', '', regex=True)
 CROW_records_2.columns = CROW_records_2.columns.str.replace(r'_pes$', '', regex=True)
-CROW_records_1.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
-CROW_records_2.rename(columns={'Record_ID': 'puid'}, inplace=True)  # Rename ID column
 CROW_records_1['Source_Dataset'] = 'cen'  # Dataset indicator
 CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
 CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(
     ['Cluster_Number'])  # Combine two datasets together
+
 CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_2_Within_EA_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
