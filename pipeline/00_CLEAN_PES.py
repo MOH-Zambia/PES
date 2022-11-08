@@ -3,8 +3,6 @@ import pandas as pd
 import os
 import sys
 
-os.chdir("C:/Users/tomlic/Rwandan_linkage/")
-
 sys.path.insert(0, "../")
 from lib.PARAMETERS import *
 
