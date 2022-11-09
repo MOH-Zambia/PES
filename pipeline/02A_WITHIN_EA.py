@@ -141,7 +141,7 @@ df['ID_count_2'] = df.groupby(['puid_pes'])['puid_cen'].transform('count')
 # Clerical resolution indicator for conflicts
 # "If either of the counts are greater than 1, then send records to CROW"
 df['CLERICAL'] = np.where(((df['ID_count_1'] > 1) | (df['ID_count_2'] > 1)), 1, 0)
-df.to_csv(CHECKPOINT_PATH + 'Stage_2_Within_EA_Checkpoint.csv', header=True)
+df.to_csv(CHECKPOINT_PATH + 'Stage_2_Within_EA_Checkpoint.csv', header=True, index=False)
 
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
@@ -161,4 +161,4 @@ CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
 CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(
     ['Cluster_Number'])  # Combine two datasets together
 
-CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_2_Within_EA_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
+CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_2_Within_EA_Matchkey_Clerical.csv', header=True, index=False)  # Save ready for CROW

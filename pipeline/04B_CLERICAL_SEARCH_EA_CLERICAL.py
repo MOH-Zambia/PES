@@ -64,4 +64,4 @@ all_ea_results = all_ea_results[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CL
 df3 = pd.concat([prev_matches, all_ea_results])
 
 # Save
-df3.to_csv(CLERICAL_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv', header=True)
+df3.to_csv(CLERICAL_PATH + 'Stage_4_All_Clerical_Search_EA_Matches.csv', header=True, index=False)

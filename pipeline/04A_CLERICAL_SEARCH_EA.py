@@ -64,5 +64,5 @@ for EA in PES_EA_list.EAid_cen.values.tolist():
     PES_EA = PES_EA[['puid_pes', 'names_pes', 'dob_pes', 'month_pes', 'year_pes', 'sex_pes', 'marstatdesc_pes']]
 
     # Save
-    CEN_EA.to_csv(CLERICAL_PATH + "Stage_4/" + 'Stage_4_Within_EA_Clerical_Search_CEN_Records_EA{}.csv'.format(str(EA)), header=True)
-    PES_EA.to_csv(CLERICAL_PATH + "Stage_4/" + 'Stage_4_Within_EA_Clerical_Search_PES_Records_EA{}.csv'.format(str(EA)), header=True)
+    CEN_EA.to_csv(CLERICAL_PATH + "Stage_4/" + 'Stage_4_Within_EA_Clerical_Search_CEN_Records_EA{}.csv'.format(str(EA)), header=True, index=False)
+    PES_EA.to_csv(CLERICAL_PATH + "Stage_4/" + 'Stage_4_Within_EA_Clerical_Search_PES_Records_EA{}.csv'.format(str(EA)), header=True, index=False)

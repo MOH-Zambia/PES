@@ -143,7 +143,7 @@ try:
     os.mkdir(CHECKPOINT_PATH)
 except:
     pass
-df.to_csv(CHECKPOINT_PATH + 'Stage_1_Within_HH_Checkpoint.csv', header=True)
+df.to_csv(CHECKPOINT_PATH + 'Stage_1_Within_HH_Checkpoint.csv', header=True, index=False)
 
 # Filter records for clerical
 CROW_records = df[df['CLERICAL'] == 1]
@@ -170,5 +170,5 @@ try:
     os.mkdir(CLERICAL_PATH)
 except:
     pass
-CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_1_Within_HH_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
+CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_1_Within_HH_Matchkey_Clerical.csv', header=True, index=False)  # Save ready for CROW
 print("Stage 1 Within HH Preclerical completed.")

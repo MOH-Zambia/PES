@@ -25,7 +25,7 @@ df = pd.read_csv(CHECKPOINT_PATH + 'Stage_1_Within_HH_Checkpoint.csv', index_col
 clerical_results = pd.read_csv(CLERICAL_PATH + 'Stage_1_Within_HH_Matchkey_Clerical_DONE.csv')
 clerical_results = CROW_output_updater(output_df=clerical_results, ID_column='puid', Source_column='Source_Dataset',
                                        df1_name='cen', df2_name='pes')
-clerical_results.to_csv(CLERICAL_PATH + 'Stage_1_Within_HH_Matchkey_Clerical_Reformatted.csv')
+clerical_results.to_csv(CLERICAL_PATH + 'Stage_1_Within_HH_Matchkey_Clerical_Reformatted.csv', index=False)
 clerical_results['clerical_match'] = 1
 
 # Join clerical results onto matches
@@ -138,4 +138,4 @@ try:
 except:
     pass
 
-df3.to_csv(OUTPUT_PATH + 'Stage_1_All_Within_HH_Matches.csv', header=True)
+df3.to_csv(OUTPUT_PATH + 'Stage_1_All_Within_HH_Matches.csv', header=True, index=False)

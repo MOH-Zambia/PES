@@ -173,4 +173,4 @@ df2 = df2[['puid_cen', 'puid_pes', 'MK', 'Match_Type', 'CLERICAL']]
 df3 = pd.concat([prev_matches, df, df2])
 
 # Save
-df3.to_csv(OUTPUT_PATH + 'Stage_5_All_Within_Country_Matches.csv', header=True)
+df3.to_csv(OUTPUT_PATH + 'Stage_5_All_Within_Country_Matches.csv', header=True, index=False)

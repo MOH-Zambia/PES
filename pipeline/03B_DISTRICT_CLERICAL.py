@@ -28,7 +28,7 @@ df = pd.read_csv(CHECKPOINT_PATH + 'Stage_3_Within_District_Checkpoint.csv')
 clerical_results = pd.read_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_DONE.csv')
 clerical_results = CROW_output_updater(output_df=clerical_results, ID_column='puid', Source_column='Source_Dataset',
                                        df1_name='cen', df2_name='pes')
-clerical_results.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_Reformatted.csv')
+clerical_results.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical_Reformatted.csv', index=False)
 clerical_results['clerical_match'] = 1
 
 # Join clerical results onto matches
@@ -137,4 +137,4 @@ prev_matches = pd.read_csv(OUTPUT_PATH + 'Stage_2_All_Within_EA_Matches.csv')
 df3 = pd.concat([prev_matches, df, df2])
 
 # Save
-df3.to_csv(OUTPUT_PATH + 'Stage_3_All_Within_DS_Matches.csv', header=True)
+df3.to_csv(OUTPUT_PATH + 'Stage_3_All_Within_DS_Matches.csv', header=True, index=False)

@@ -113,4 +113,4 @@ CROW_records_2['Source_Dataset'] = 'pes'  # Dataset indicator
 CROW_records_final = pd.concat([CROW_records_1, CROW_records_2], axis=0).sort_values(
     ['Cluster_Number'])  # Combine two datasets together
 
-CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical.csv', header=True)  # Save ready for CROW
+CROW_records_final.to_csv(CLERICAL_PATH + 'Stage_3_Within_DS_Matchkey_Clerical.csv', header=True, index=False)  # Save ready for CROW
