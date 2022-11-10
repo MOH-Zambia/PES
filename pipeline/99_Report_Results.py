@@ -1,5 +1,6 @@
 # Import any packages required
-import pandas as pd
+import pandas as 
+import numpy as np
 import sys
 
 sys.path.insert(0, "C:\\Users\\tomlic\\Rwandan_linkage")
@@ -38,6 +39,7 @@ def results_func(file, match_type):
         
 """Apply function to different matching stages"""
 
+
 # Within HH MKs    
 results_func(file='Stage_1_All_Within_HH_Matches', match_type='Within_HH_Matchkey')
         
@@ -68,5 +70,49 @@ results_func(file='Stage_6_All_Within_Country_Matches', match_type='Within_Count
 # Within Country Associative MKs    
 results_func(file='Stage_6_All_Within_Country_Matches', match_type='Within_Country_Associative')
 
+
+"""Once matching has finished, we can take the final dataset and break it down by stage to get our final metrics
+    (total matches, uniques, conflicts, match rate, unmatched PES etc.)"""
+
+
+# Read in final matches
+final_matches = pd.read_csv(OUTPUT_PATH + 'FINAL_MATCHES.csv')
+
+# Stages in order
+stages = ['Within_HH_Matchkey', 'Within_HH_Associative', 'Within_EA_Matchkey', 'Within_EA_Associative', 'Within_EA_Clerical_MK', 
+         'Within_EA_Clerical_Search', 'Within_DS_Matchkey', 'Within_DS_Associative', 'Within_Country_Matchkey', 'Within_Country_Associative']
+
+# Group by matching stage (Match_Type) and clerical indicator (similar to previous function)
+df = pd.crosstab(final_matches['Match_Type'], final_matches['CLERICAL'])
+
+# Convert to pandas DataFrame
+df.rename_axis(index = None, columns= df.index.name, inplace = True)
+df = df.reset_index(level=0)
+df.rename(columns={'index': 'Stage', 0: "Unique_Matches", 1: "Clerical_Matches"}, inplace = True)
+    
+# Create a stage number column to sort data on
+df['Stage_Number'] = None
+for i, stage in enumerate(stages, 1):
+    df['Stage_Number'] = np.where(df['Stage'] == stage, i, df['Stage_Number'])
+df = df.sort_values(['Stage_Number'])
+
+# Total PES and CEN (PES EAs) records
+TOTAL_PES = 300
+TOTAL_CEN_EA = 300
+
+# Create columns for totals, cumulative totals, unmatched etc. 
+df['Total_Matches'] = df['Unique_Matches'] + df['Clerical_Matches'] 
+df['Cumulative_Unique_Matches'] = df['Unique_Matches'].cumsum()
+df['Cumulative_PES_Match_Rate'] = df['Cumulative_Unique_Matches'] / TOTAL_PES * 100
+df['Cumulative_Unmatched_PES'] = TOTAL_PES - df['Cumulative_Unique_Matches']
+df['Cumulative_Unmatched_CEN'] = TOTAL_CEN_EA - df['Cumulative_Unique_Matches']
+
+# Column order
+df = df[['Stage_Number', 'Stage', 'Total_Matches', 'Unique_Matches', 'Clerical_Matches',
+       'Cumulative_Unique_Matches','Cumulative_PES_Match_Rate', 'Cumulative_Unmatched_PES','Cumulative_Unmatched_CEN']]
+
+# Save DataFrame to Excel spreadsheet
+df.to_excel(Excelwriter, sheet_name = 'Final_Metrics', index=False)
+      
 # Save spreadsheet
 Excelwriter.save()
