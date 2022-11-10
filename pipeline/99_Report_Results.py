@@ -11,11 +11,10 @@ Excelwriter = pd.ExcelWriter("Results.xlsx",engine="xlsxwriter")
 # Function for taking a dataframe, selecting required records and grouping by matchkey and clerical indicator
 def results_func(file, match_type):
     """
-    Records results from a particular matching stage and saves in a new sheet in Excel spreadsheet
-    :param df: input dataframe with fullname_column present
-    :param file: name of column containing fullname as string type
-    :param sheet: Optional suffix to append to name component column names
-    :return: input dataframe with additional columns for first, second and last names
+    Records results from a specific matching stage and saves them in a new Excel spreadsheet
+    :param file: input dataframe containing matches made from relevant matching method (within HH, within EA etc..)
+    :param match_type: stage of matching that you want to filter the dataset on (matchkeys, associative, clerical matchkeys etc..)
+    :return: results added to excel spreadsheet
     """
     # Read in matches
     df = pd.read_csv(OUTPUT_PATH + file + '.csv')
