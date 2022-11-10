@@ -1,11 +1,6 @@
 # Import any packages required
 import pandas as pd
-import numpy as np
-import jellyfish
-import os
 import sys
-import openpyxl
-import xlsxwriter
 
 sys.path.insert(0, "C:\\Users\\tomlic\\Rwandan_linkage")
 from lib.PARAMETERS import *
@@ -13,44 +8,66 @@ from lib.PARAMETERS import *
 # Define Excel writer object and the target file
 Excelwriter = pd.ExcelWriter("Results.xlsx",engine="xlsxwriter")
 
-# ----- HH ----- #
-df_hh = pd.read_csv(OUTPUT_PATH + 'Stage_1_All_Within_HH_Matches.csv')
-df1 = df_hh[df_hh['Match_Type'] == 'Within_HH_Matchkey']
-results1 = pd.crosstab(df1['MK'], df1['CLERICAL'])
-results1.rename_axis(index = None, columns= results1.index.name, inplace = True)
-results1 = results1.reset_index(level=0)
-results1.rename(columns={'index': 'Matchkey', 0: "Unique_Matches", 1: "Clerical_Matches"}, inplace = True)
-
-# HH ASSOCIATIVE
-df2 = df_hh[df_hh['Match_Type'] == 'Within_HH_Associative']
-results2 = df2['MK'].value_counts().rename_axis('MK').reset_index(name='Unique_Matches')
-
-# EA
-df_ea = pd.read_csv(OUTPUT_PATH + 'Stage_2_All_Within_EA_Matches.csv')
-df3 = df_ea[df_ea['Match_Type'] == 'Within_EA_Matchkey']
-results3 = pd.crosstab(df3['MK'], df3['CLERICAL'])
-results3.rename_axis(index = None, columns= results3.index.name, inplace = True)
-results3 = results3.reset_index(level=0)
-results3.rename(columns={'index': 'Matchkey', 0: "Unique_Matches", 1: "Clerical_Matches"}, inplace = True)
-
-# EA ASSOCIATIVE
-df4 = df_ea[df_ea['Match_Type'] == 'Within_EA_Associative']
-results4 = df4['MK'].value_counts().rename_axis('MK').reset_index(name='Unique_Matches')
-
-# EA CLERICAL MATCHKEYS
-
-# EA CLERICAL SEARCH (EXCEL)
-
-# DISTRICT
-
-# COUNTRY
-
-# Save results
-results_save = [results1, results2]
-sheet_names = ['Within_HH', 'Associative_HH']
-for result, sheet in zip(results_save, sheet_names):
-    result.to_excel(Excelwriter, sheet_name= sheet, index=False)
+# Function for taking a dataframe, selecting required records and grouping by matchkey and clerical indicator
+def results_func(file, match_type):
+    """
+    Records results from a particular matching stage and saves in a new sheet in Excel spreadsheet
+    :param df: input dataframe with fullname_column present
+    :param file: name of column containing fullname as string type
+    :param sheet: Optional suffix to append to name component column names
+    :return: input dataframe with additional columns for first, second and last names
+    """
+    # Read in matches
+    df = pd.read_csv(OUTPUT_PATH + file + '.csv')
     
-# Save
-Excelwriter.save()
+    # Select which stage of matching 
+    df_stage = df[df['Match_Type'] == match_type]
+    
+    # Breakdown matches by matchkey and whether or not the match was made clerically
+    results = pd.crosstab(df_stage['MK'], df_stage['CLERICAL'])
+    
+    # Convert to pandas DataFrame
+    results.rename_axis(index = None, columns= results.index.name, inplace = True)
+    results = results.reset_index(level=0)
+    
+    # Rename columns
+    results.rename(columns={'index': 'Matchkey', 0: "Unique_Matches", 1: "Clerical_Matches"}, inplace = True)
+    
+    # Add to Excel spreadsheet
+    results.to_excel(Excelwriter, sheet_name = match_type, index=False)
+        
+        
+"""Apply function to different matching stages"""
 
+# Within HH MKs    
+results_func(file='Stage_1_All_Within_HH_Matches', match_type='Within_HH_Matchkey')
+        
+# Within HH Associative MKs    
+results_func(file='Stage_1_All_Within_HH_Matches', match_type='Within_HH_Associative')
+
+# Within EA MKs    
+results_func(file='Stage_2_All_Within_EA_Matches', match_type='Within_EA_Matchkey')
+
+# Within EA Associative MKs    
+results_func(file='Stage_2_All_Within_EA_Matches', match_type='Within_EA_Associative')
+
+# Within EA Clerical Matchkeys
+results_func(file='Stage_3_Clerical_MK_EA_Matches', match_type='Within_EA_Clerical_MK')
+
+# Within EA Search (in Excel)
+results_func(file='Stage_4_Clerical_Search_EA_Matches', match_type='Within_EA_Clerical_Search')
+
+# Within District MKs    
+results_func(file='Stage_5_All_Within_DS_Matches', match_type='Within_DS_Matchkey')
+        
+# Within District Associative MKs    
+results_func(file='Stage_5_All_Within_DS_Matches', match_type='Within_DS_Associative')
+
+# Within Country MKs    
+results_func(file='Stage_6_All_Within_Country_Matches', match_type='Within_Country_Matchkey')
+
+# Within Country Associative MKs    
+results_func(file='Stage_6_All_Within_Country_Matches', match_type='Within_Country_Associative')
+
+# Save spreadsheet
+Excelwriter.save()
