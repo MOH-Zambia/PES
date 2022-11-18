@@ -1,5 +1,5 @@
 # Import any packages required
-import pandas as 
+import pandas as pd
 import numpy as np
 import sys
 
@@ -76,7 +76,7 @@ results_func(file='Stage_6_All_Within_Country_Matches', match_type='Within_Count
 
 
 # Read in final matches
-final_matches = pd.read_csv(OUTPUT_PATH + 'FINAL_MATCHES.csv')
+final_matches = pd.read_csv(OUTPUT_PATH + 'Stage_6_All_Within_Country_Matches.csv')
 
 # Stages in order
 stages = ['Within_HH_Matchkey', 'Within_HH_Associative', 'Within_EA_Matchkey', 'Within_EA_Associative', 'Within_EA_Clerical_MK', 
@@ -97,8 +97,8 @@ for i, stage in enumerate(stages, 1):
 df = df.sort_values(['Stage_Number'])
 
 # Total PES and CEN (PES EAs) records
-TOTAL_PES = 300
-TOTAL_CEN_EA = 300
+TOTAL_PES = 350
+TOTAL_CEN_EA = 350
 
 # Create columns for totals, cumulative totals, unmatched etc. 
 df['Total_Matches'] = df['Unique_Matches'] + df['Clerical_Matches'] 
